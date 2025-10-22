@@ -14,6 +14,7 @@ from attacks.bruteforce import BruteForceAttack
 from utils.banner import show_banner
 from utils.crypto import hash_password, identify_hash_type
 from utils.password_analyzer import analyze_password_strength
+from interactive_cli import main as interactive_main
 
 
 def setup_logging(verbose=False):
@@ -135,6 +136,13 @@ def password_analyzer_mode(args):
             print(f"File not found: {args.file}")
 
 
+def interactive_mode(args):
+    """Start the interactive menu-driven interface"""
+    from interactive_cli import main as interactive_main
+
+    interactive_main()
+
+
 def main():
     show_banner()
 
@@ -234,6 +242,10 @@ def main():
         help="Encoding type",
     )
 
+    interactive_parser = subparsers.add_parser(
+        "interactive", help="Start interactive menu interface"
+    )
+
     # Password Analyzer
     analyzer_parser = subparsers.add_parser(
         "analyze", help="Password strength analysis"
@@ -260,6 +272,8 @@ def main():
             encoder_mode(args)
         elif args.mode == "analyze":
             password_analyzer_mode(args)
+        elif args.mode == "interactive":
+            interactive_mode(args)
     except KeyboardInterrupt:
         print("\n[!] Operation cancelled by user")
     except Exception as e:
