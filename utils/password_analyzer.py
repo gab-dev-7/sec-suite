@@ -1,62 +1,201 @@
-import math
+import re
 import string
-import secrets
+from typing import Dict, Tuple
 
 
-def calculate_password_entropy(password: str) -> float:
+def analyze_password_strength(password: str) -> int:
+    """
+    Analyze password strength and return a score from 0-100
+    """
     if not password:
-        return 0.0
+        return 0
 
-    # Define character sets
-    lowercase = set(string.ascii_lowercase)
-    uppercase = set(string.ascii_uppercase)
-    digits = set(string.digits)
-    symbols = set(string.punctuation)
+    score = 0
+    feedback = []
 
-    password_chars = set(password)
-
-    # Determine which character sets are used
-    char_pool_size = 0
-    if password_chars.intersection(lowercase):
-        char_pool_size += len(lowercase)
-    if password_chars.intersection(uppercase):
-        char_pool_size += len(uppercase)
-    if password_chars.intersection(digits):
-        char_pool_size += len(digits)
-    if password_chars.intersection(symbols):
-        char_pool_size += len(symbols)
-
-    # Calculate entropy
-    L = len(password)
-    N = char_pool_size
-
-    if N > 0:
-        entropy = L * math.log2(N)
+    # Length check (max 25 points)
+    length = len(password)
+    if length >= 12:
+        score += 25
+        feedback.append("✓ Good length (12+ characters)")
+    elif length >= 8:
+        score += 15
+        feedback.append("✓ Acceptable length (8-11 characters)")
     else:
-        entropy = 0.0
+        score += 5
+        feedback.append("✗ Too short (less than 8 characters)")
 
-    print(f"Password: '{password}'")
-    print(f"Length (L): {L}")
-    print(f"Character Pool Size (N): {N}")
-    print(f"Calculated Entropy: {entropy:.2f} bits")
-    print("-" * 20)
+    # Character variety checks
+    has_upper = any(c.isupper() for c in password)
+    has_lower = any(c.islower() for c in password)
+    has_digit = any(c.isdigit() for c in password)
+    has_special = any(c in string.punctuation for c in password)
 
-    return entropy
+    # Character variety (max 40 points)
+    char_variety = sum([has_upper, has_lower, has_digit, has_special])
+    if char_variety == 4:
+        score += 40
+        feedback.append("✓ Excellent character variety (upper, lower, digits, special)")
+    elif char_variety == 3:
+        score += 25
+        feedback.append("✓ Good character variety (3 character types)")
+    elif char_variety == 2:
+        score += 15
+        feedback.append("✓ Basic character variety (2 character types)")
+    else:
+        score += 5
+        feedback.append("✗ Poor character variety (only 1 character type)")
+
+    # Entropy calculation (max 20 points)
+    entropy = calculate_entropy(password)
+    if entropy > 4.0:
+        score += 20
+        feedback.append(f"✓ High entropy ({entropy:.2f} bits per character)")
+    elif entropy > 3.0:
+        score += 15
+        feedback.append(f"✓ Moderate entropy ({entropy:.2f} bits per character)")
+    else:
+        score += 5
+        feedback.append(f"✗ Low entropy ({entropy:.2f} bits per character)")
+
+    # Common pattern penalties (max -15 points penalty)
+    penalty = check_common_patterns(password)
+    score -= penalty
+
+    if penalty > 0:
+        feedback.append(f"✗ Contains common patterns (-{penalty} points)")
+
+    # Ensure score is within bounds
+    final_score = max(0, min(100, score))
+
+    # Print feedback
+    print(f"\nPassword Analysis for: {password}")
+    print("=" * 50)
+    for item in feedback:
+        print(item)
+    print(f"\nFinal Strength Score: {final_score}/100")
+
+    if final_score >= 80:
+        print("Strength: VERY STRONG")
+    elif final_score >= 60:
+        print("Strength: STRONG")
+    elif final_score >= 40:
+        print("Strength: MODERATE")
+    elif final_score >= 20:
+        print("Strength: WEAK")
+    else:
+        print("Strength: VERY WEAK")
+
+    return final_score
 
 
-def generate_password(length: int, use_symbols: bool = True):
-    if length <= 0:
-        raise ValueError("Password length must be a positive integer.")
+def calculate_entropy(password: str) -> float:
+    """Calculate password entropy in bits per character"""
+    char_set_size = 0
 
-    lowercase = string.ascii_lowercase
-    uppercase = string.ascii_uppercase
-    digits = string.digits
-    symbols = string.punctuation
+    if any(c.islower() for c in password):
+        char_set_size += 26
+    if any(c.isupper() for c in password):
+        char_set_size += 26
+    if any(c.isdigit() for c in password):
+        char_set_size += 10
+    if any(c in string.punctuation for c in password):
+        char_set_size += 32
 
-    character_pool = lowercase + uppercase + digits
-    if use_symbols:
-        character_pool += symbols
+    if char_set_size == 0:
+        return 0
 
-    password = "".join(secrets.choice(character_pool) for _ in range(length))
+    return (len(password) * (char_set_size**0.5)) / len(password)
 
-    return password
+
+def check_common_patterns(password: str) -> int:
+    """Check for common patterns and return penalty score"""
+    penalty = 0
+    password_lower = password.lower()
+
+    # Common passwords and patterns
+    common_passwords = [
+        "password",
+        "123456",
+        "qwerty",
+        "admin",
+        "welcome",
+        "letmein",
+        "monkey",
+        "password1",
+        "12345678",
+        "123456789",
+    ]
+
+    sequential_patterns = [
+        "123",
+        "234",
+        "345",
+        "456",
+        "567",
+        "678",
+        "789",
+        "abc",
+        "bcd",
+        "cde",
+        "def",
+        "efg",
+        "fgh",
+        "ghi",
+        "qwe",
+        "wer",
+        "ert",
+        "rty",
+        "tyu",
+        "yui",
+        "uio",
+        "iop",
+    ]
+
+    keyboard_patterns = ["qwerty", "asdfgh", "zxcvbn", "qazwsx", "123qwe"]
+
+    # Check for common passwords
+    for common in common_passwords:
+        if common in password_lower:
+            penalty += 10
+
+    # Check for sequential patterns
+    for pattern in sequential_patterns:
+        if pattern in password_lower:
+            penalty += 5
+
+    # Check for keyboard patterns
+    for pattern in keyboard_patterns:
+        if pattern in password_lower:
+            penalty += 8
+
+    # Check for repeated characters
+    if re.search(r"(.)\1{2,}", password):
+        penalty += 5
+
+    return min(penalty, 15)  # Max penalty of 15 points
+
+
+def get_password_recommendations(password: str) -> list:
+    """Get recommendations for improving password strength"""
+    recommendations = []
+
+    if len(password) < 12:
+        recommendations.append("Use at least 12 characters")
+
+    if not any(c.isupper() for c in password):
+        recommendations.append("Add uppercase letters")
+
+    if not any(c.islower() for c in password):
+        recommendations.append("Add lowercase letters")
+
+    if not any(c.isdigit() for c in password):
+        recommendations.append("Add numbers")
+
+    if not any(c in string.punctuation for c in password):
+        recommendations.append("Add special characters (!@#$% etc.)")
+
+    if check_common_patterns(password) > 0:
+        recommendations.append("Avoid common patterns and sequences")
+
+    return recommendations

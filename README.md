@@ -1,90 +1,133 @@
+# SEC-SUITE - Advanced Security Testing Toolkit
 
-# 🔐 Password Security Suite
+A comprehensive security testing toolkit with password cracking, network scanning, and security assessment tools.
 
-A comprehensive, educational, and practical command-line toolkit for exploring password security, cryptography, and cracking techniques.
+## 🚀 New Features in v2.0
 
-![ASCII Art Banner](https://i.imgur.com/your-gif-here.gif) <!-- You can create a GIF of your tool in action later! -->
+- **Markov Chain Password Attacks** - Generate realistic passwords using probability models
+- **Brute Force Attacks** - Configurable character sets and length ranges
+- **Modern Hash Support** - bcrypt, scrypt, and hash auto-detection
+- **Multi-threading** - Dramatically improved performance
+- **Network Scanner** - Multi-threaded port scanning
+- **Advanced Keylogger** - Window title capture and stealth mode
+- **Encoding Tools** - Base64, URL, HTML, and Hex encoding/decoding
+- **Professional Logging** - Comprehensive logging system
 
-## Features
+## 📦 Installation
 
-- **🔢 Password Entropy Calculator:** Quantitatively measures password strength using information theory.
-- **🔑 Secure Password Generator:** Creates cryptographically secure random passwords with customizable rules.
-- **🧮 Cryptographic Hashing:** Hashes passwords using standard algorithms like SHA-256.
-- **📚 Dictionary Attack:** Simulates a basic cracking attack using a wordlist.
-- **🌈 Rainbow Table Attack:** Implements a sophisticated time-memory trade-off attack to crack hashes without a massive wordlist.
+```bash
+git clone https://github.com/gab-dev-7/sec-suite.git
+cd sec-suite
+pip install -r requirements.txt
+🛠️ Usage
+Password Cracking
+bash
+# Dictionary attack
+python main.py crack -t <target_hash> -a sha256 -m dictionary -w data/rockyou.txt --threads 8
 
-## Installation
+# Markov chain attack
+python main.py crack -t <target_hash> -a md5 -m markov -w data/rockyou.txt --max-passwords 50000
 
-Get up and running in seconds.
+# Brute force attack
+python main.py crack -t <target_hash> -a sha1 -m bruteforce --charset "luds" --min-length 4 --max-length 6
 
-1. **Clone the repository:**
+# Auto-detect hash type
+python main.py crack -t <target_hash> -m dictionary -w data/rockyou.txt
+Network Scanning
+bash
+# Scan single host
+python main.py scan -t 192.168.1.1 -p 1-1000 --threads 50
 
-    ```bash
-    git clone https://github.com/your-username/password-security-suite.git
-    cd password-security-suite
-    ```
+# Scan network range
+python main.py scan -t 192.168.1.0/24 -p 22,80,443,3389
+Keylogging
+bash
+# Basic keylogger
+python main.py keylog -o keystrokes.txt
 
-2. **Create and activate a virtual environment:**
+# Stealth mode with window capture
+python main.py keylog -s --capture-window -o keylog.txt
 
-    ```bash
-    python3 -m venv venv
-    source venv/bin/activate  # On Windows: venv\Scripts\activate
-    ```
+# Timed keylogger
+python main.py keylog -d 300 -o session.txt
+Encoding/Decoding
+bash
+# Base64 encode
+python main.py encode -d "hello world" -o encode -e base64
 
-3. **Run the application:**
+# URL decode
+python main.py encode -d "hello%20world" -o decode -e url
 
-    ```bash
-    python main.py
-    ```
+# Hex encode
+python main.py encode -d "secret" -o encode -e hex
+🔧 Tools Overview
+Password Cracking
+Dictionary Attack: Traditional wordlist-based cracking
 
-## Usage
+Markov Attack: Probability-based password generation
 
-The suite is driven by an interactive menu. Simply run `python main.py` and follow the on-screen prompts.
+Brute Force: Exhaustive character combination testing
 
-### Example Walkthrough
+Rainbow Tables: Precomputed hash chains (basic)
 
-1. **Calculate Entropy:** Choose option `1` from the main menu, then enter a password like `MyP@ssw0rd123!` to see its entropy in bits.
-2. **Generate a Rainbow Table:**
-    - Choose option `4` (Rainbow Table Utilities).
-    - Choose option `1` (Generate Table).
-    - Enter the parameters when prompted (e.g., charset `abcd`, chains `5000`, length `50`, password length `4`).
-3. **Crack a Hash:**
-    - First, get a hash for a known password using option `3`.
-    - Then, go into Rainbow Table Utilities (`4`) and choose option `2` (Crack Hash).
-    - Paste the hash and select the table file you generated.
+Security Tools
+Keylogger: Advanced logging with window context
 
-## How It Works
+Network Scanner: Multi-threaded port discovery
 
-This project is a practical exploration of concepts from discrete mathematics and cybersecurity.
+Encoder/Decoder: Multiple encoding scheme support
 
-### Dictionary Attack
+⚠️ Legal Disclaimer
+This tool is for educational and authorized security testing purposes only. The developers are not responsible for any misuse or damage caused by this program. Always ensure you have proper authorization before testing any system.
 
-This is the simplest cracking method. It takes a hash and iterates through every word in a list (a "wordlist"), hashing each one and comparing it to the target hash. It's fast but only effective against passwords that are common words.
+🏗️ Project Structure
+text
+sec-suite/
+├── main.py                 # Main CLI interface
+├── cli.py                  # Command-line argument parser
+├── attacks/                # Password cracking modules
+│   ├── dictionary.py      # Dictionary attack
+│   ├── markov.py          # Markov chain attack
+│   ├── bruteforce.py      # Brute force attack
+│   └── rainbow.py         # Rainbow table attack
+├── tools/                  # Security tools
+│   ├── keylogger.py       # Advanced keylogger
+│   ├── network_scanner.py # Port scanner
+│   └── encoder.py         # Encoding utilities
+├── utils/                  # Core utilities
+│   ├── banner.py          # Application banner
+│   ├── crypto.py          # Cryptographic functions
+│   └── password_analyzer.py
+└── data/                   # Data files
+    └── rockyou.txt        # Example wordlist
+🎯 Advanced Usage
+Markov Chain Attacks
+Markov attacks use statistical models trained on real passwords to generate highly probable password candidates. This is effective against passwords that follow common patterns but aren't in standard wordlists.
 
-### Rainbow Tables
+Multi-threading
+All cracking operations support multi-threading. Adjust the --threads parameter based on your CPU capabilities for optimal performance.
 
-A rainbow table is a pre-computed table for reversing cryptographic hash functions. It's a time-memory trade-off:
+Hash Auto-detection
+The tool can automatically detect common hash types based on length and format, making it easier to work with unknown hashes.
 
-- **Time-Intensive Generation:** We spend a lot of time upfront generating chains of `hash -> reduce -> hash -> reduce...` and storing only the start and end points.
-- **Fast Cracking:** To crack a hash, we don't need to re-generate everything. We can perform a lookup to see if the hash could be part of a chain, and if so, re-compute just that one chain to find the original password. This allows cracking passwords that would be infeasible with a pure dictionary attack on a small character set.
+🤝 Contributing
+Contributions are welcome! Please feel free to submit pull requests or open issues for bugs and feature requests.
 
-## Project Structure
+📄 License
+This project is licensed under the MIT License - see the LICENSE file for details.
 
-password-security-suite/
-├── main.py # Entry point of the application
-├── cli.py # Interactive menu and user interface logic
-├── utils/
-│ ├── init.py
-│ ├── password_analyzer.py # Entropy and generation logic
-│ └── crypto.py # Hashing logic
-└── attacks/
-├── init.py
-├── dictionary.py # Dictionary attack implementation
-└── rainbow.py # Rainbow table generation and cracking
+text
 
-## Future Enhancements
+## Key Improvements Made:
 
-- [ ] **Markov Chain Cracker:** Implement a probabilistic model for more intelligent password guessing.
-- [ ] **Multiprocessing:** Speed up rainbow table generation using parallel processing.
-- [ ] **More Hash Algorithms:** Add support for MD5, SHA1, etc.
-- [ ] **GUI Version:** Create a graphical user interface using Tkinter or PyQt.
+1. **Markov Chain Attacks** - New probabilistic password generation
+2. **Brute Force Attacks** - Configurable character sets and lengths  
+3. **Modern Hash Support** - bcrypt, scrypt with proper salt handling
+4. **Multi-threading** - All attacks now use multiple threads
+5. **Hash Auto-detection** - Smart hash type identification
+6. **New Tools** - Network scanner, advanced keylogger, encoder/decoder
+7. **Professional Logging** - Comprehensive logging system
+8. **Better CLI** - More intuitive command structure
+9. **Enhanced Documentation** - Comprehensive README with examples
+
+The tool is now much more powerful and professional, with enterprise-grade features while maintaining ease of use.

@@ -1,0 +1,5 @@
+bcrypt>=3.2.0
+keyboard>=0.13.5
+pywin32>=300; sys_platform == 'win32'
+scapy>=2.4.5
+argon2-cffi>=21.3.0

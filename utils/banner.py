@@ -1,51 +1,20 @@
-# utils/banner.py
-import random
-
-
-def get_banner():
-    """Returns a random ASCII art banner for the welcome screen."""
-    banners = [
-        # Banner 1: The Lock & Key
-        """
-╔══════════════════════════════════════╗
-║                                      ║
-║   🔐   PASSWORD    SECURITY   🔐     ║
-║                                      ║
-║   A Toolkit for Modern Cryptography  ║
-║                                      ║
-╚══════════════════════════════════════╝
-        """,
-        # Banner 2: The Terminal Hacker
-        """
-▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
-▓▓                                       ▓▓
-▓▓  > P A S S W O R D - S E C U R I T Y  ▓▓
-▓▓  > SUITE v1.0                         ▓▓
-▓▓                                       ▓▓
-▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
-        """,
-        # Banner 3: The Matrix
-        """
-░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-░░ P A S S W O R D ░ S E C U R I T Y ░░
-░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-░░░ Wake up... They have everything  ░░
-░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-        """,
-        # Banner 4: The Minimalist
-        """
-==================================
-||  PASSWORD SECURITY SUITE     ||
-||  ------------------------    ||
-|| [Analyze | Generate | Crack] ||
-==================================
-        """,
-    ]
-    return random.choice(banners)
-
-
-def clear_screen():
-    """Clears the terminal screen."""
-    import os
-
-    os.system("cls" if os.name == "nt" else "clear")
+def show_banner():
+    """Display the sec-suite banner"""
+    banner = """
+    ╔══════════════════════════════════════════════════════════════╗
+    ║                   SEC-SUITE Security Toolkit                 ║
+    ║                      Advanced Edition v2.0                  ║
+    ║                                                              ║
+    ║  Features:                                                   ║
+    ║    • Password Cracking (Dictionary, Markov, Brute Force)     ║
+    ║    • Multi-threaded Attacks                                  ║
+    ║    • Modern Hash Support (bcrypt, scrypt, argon2)            ║
+    ║    • Advanced Keylogger with Window Capture                  ║
+    ║    • Network Port Scanner                                    ║
+    ║    • Encoding/Decoding Tools                                 ║
+    ║    • Hash Type Auto-detection                                ║
+    ║                                                              ║
+    ║  Use responsibly and only on systems you own!                ║
+    ╚══════════════════════════════════════════════════════════════╝
+    """
+    print(banner)
