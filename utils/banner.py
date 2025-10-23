@@ -3,7 +3,7 @@ def show_banner():
     banner = """
     ╔══════════════════════════════════════════════════════════════╗
     ║                   SEC-SUITE Security Toolkit                 ║
-    ║                      Advanced Edition v2.0                  ║
+    ║                      Advanced Edition v2.0                   ║
     ║                                                              ║
     ║  Features:                                                   ║
     ║    • Password Cracking (Dictionary, Markov, Brute Force)     ║
