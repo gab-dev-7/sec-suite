@@ -234,33 +234,33 @@ python main.py crack -t "5e884898da28047151d0e56f8dc62927" -m dictionary
 
 ```
 sec-suite/
-├── main.py                 # Main command-line interface
-├── run.py                  # Interactive mode launcher
-├── interactive_cli.py      # Interactive menu system
-├── cli.py                  # Legacy CLI interface
-├── requirements.txt        # Python dependencies
+├── main.py                     # Main command-line interface
+├── run.py                      # Interactive mode launcher
+├── interactive_cli.py          # Interactive menu system
+├── cli.py                      # Legacy CLI interface
+├── requirements.txt            # Python dependencies
 │
-├── attacks/                # Password cracking modules
-│   ├── dictionary.py      # Dictionary attack implementation
-│   ├── markov.py          # Markov chain attack
-│   ├── bruteforce.py      # Brute force attack
-│   └── rainbow.py         # Rainbow table attack
+├── attacks/                    # Password cracking modules
+│   ├── dictionary.py           # Dictionary attack implementation
+│   ├── markov.py               # Markov chain attack
+│   ├── bruteforce.py           # Brute force attack
+│   └── rainbow.py              # Rainbow table attack
 │
-├── tools/                  # Security utilities
-│   ├── keylogger.py       # Advanced keylogging
-│   ├── network_scanner.py # Port scanning
-│   └── encoder.py         # Encoding/decoding
+├── tools/                      # Security utilities
+│   ├── keylogger.py            # Advanced keylogging
+│   ├── network_scanner.py      # Port scanning
+│   └── encoder.py              # Encoding/decoding
 │
-├── utils/                  # Core utilities
-│   ├── banner.py          # Application branding
-│   ├── crypto.py          # Cryptographic functions
-│   └── password_analyzer.py # Strength analysis
+├── utils/                      # Core utilities
+│   ├── banner.py               # Application branding
+│   ├── crypto.py               # Cryptographic functions
+│   └── password_analyzer.py    # Strength analysis
 │
-├── data/                   # Data files
-│   └── rockyou.txt        # Example wordlist
+├── data/                       # Data files
+│   └── rockyou.txt             # Example wordlist
 │
-└── docs/                   # Documentation
-    └── examples/          # Usage examples
+└── docs/                       # Documentation
+    └── examples/               # Usage examples
 ```
 
 ## 🎯 Advanced Usage Examples
