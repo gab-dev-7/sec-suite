@@ -1,9 +1,5 @@
 # SEC-SUITE - Advanced Security Testing Toolkit v2.0
 
-![SEC-SUITE Banner](https://img.shields.io/badge/SEC--SUITE-v2.0-blue)
-![Python](https://img.shields.io/badge/Python-3.8%2B-green)
-![License](https://img.shields.io/badge/License-MIT-yellow)
-
 A comprehensive, multi-functional security testing toolkit designed for security professionals, penetration testers, and educational purposes. SEC-SUITE combines powerful password cracking capabilities with essential security tools in an intuitive interface.
 
 ## 🚀 What's New in v2.0
