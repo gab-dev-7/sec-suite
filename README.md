@@ -9,7 +9,7 @@
 
 **SEC-SUITE** is a comprehensive security toolkit designed for professionals, penetration testers, and educators. It unifies powerful password auditing capabilities with essential network reconnaissance tools in a single, modular interface.
 
-Whether you prefer a **Menu-Driven CLI** for ease of use or **Command-Line Arguments** for automation, SEC-SUITE adapts to your workflow.
+Whether you prefer a **CLI** for ease of use or **Raw Terminal Commands** for automation, SEC-SUITE adapts to your workflow.
 
 ---
 
