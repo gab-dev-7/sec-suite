@@ -195,21 +195,6 @@ def main():
     )
     cracker_parser.add_argument("--rainbow-table", help="Rainbow table path")
 
-    # Keylogger
-    keylogger_parser = subparsers.add_parser("keylog", help="Keylogging tools")
-    keylogger_parser.add_argument(
-        "-o", "--output", default="keylog.txt", help="Output file for keystrokes"
-    )
-    keylogger_parser.add_argument(
-        "-s", "--stealth", action="store_true", help="Enable stealth mode"
-    )
-    keylogger_parser.add_argument(
-        "-d", "--duration", type=int, help="Duration in seconds"
-    )
-    keylogger_parser.add_argument(
-        "--capture-window", action="store_true", help="Capture active window titles"
-    )
-
     # Network Scanner
     network_parser = subparsers.add_parser("scan", help="Network scanning tools")
     network_parser.add_argument(
@@ -264,8 +249,6 @@ def main():
     try:
         if args.mode == "crack":
             password_cracker_mode(args)
-        elif args.mode == "keylog":
-            keylogger_mode(args)
         elif args.mode == "scan":
             network_scanner_mode(args)
         elif args.mode == "encode":

@@ -9,7 +9,6 @@ A comprehensive, multi-functional security testing toolkit designed for security
 - **Modern Hash Support** - bcrypt, scrypt, argon2 with proper salt handling
 - **Multi-threading** - Dramatic performance improvements across all attacks
 - **Network Security Tools** - Port scanner and network reconnaissance
-- **Advanced Keylogger** - Stealth operation with window context capture
 - **Encoding Utilities** - Multiple encoding/decoding schemes
 - **Interactive CLI** - User-friendly menu-driven interface
 - **Hash Auto-detection** - Smart hash type identification
@@ -18,8 +17,8 @@ A comprehensive, multi-functional security testing toolkit designed for security
 ## 📦 Installation
 
 ### Prerequisites
-- Python 3.8 or higher
-- pip (Python package manager)
+- Python 3.10 or higher
+- Poetry (for dependency management)
 
 ### Quick Setup
 ```bash
@@ -27,23 +26,11 @@ A comprehensive, multi-functional security testing toolkit designed for security
 git clone https://github.com/gab-dev-7/sec-suite.git
 cd sec-suite
 
-# Install dependencies
-pip install -r requirements.txt
+# Install dependencies using Poetry
+poetry install
 
 # Run the interactive interface
-python run.py
-```
-
-### Manual Installation
-```bash
-# Install individual dependencies
-pip install bcrypt>=3.2.0
-pip install keyboard>=0.13.5
-pip install scapy>=2.4.5
-pip install argon2-cffi>=21.3.0
-
-# Windows users may need:
-pip install pywin32>=300
+poetry run python run.py
 ```
 
 ## 🎮 Interactive Interface (Recommended for Beginners)
@@ -51,12 +38,12 @@ pip install pywin32>=300
 Start the user-friendly menu system:
 
 ```bash
-python run.py
+poetry run python run.py
 ```
 
 Or alternatively:
 ```bash
-python main.py interactive
+poetry run python main.py interactive
 ```
 
 ### Interactive Features:
@@ -73,22 +60,22 @@ python main.py interactive
 
 #### Dictionary Attack
 ```bash
-python main.py crack -t <target_hash> -a sha256 -m dictionary -w data/rockyou.txt --threads 8
+poetry run python main.py crack -t <target_hash> -a sha256 -m dictionary -w data/rockyou.txt --threads 8
 ```
 
 #### Markov Chain Attack
 ```bash
-python main.py crack -t <target_hash> -a md5 -m markov -w data/rockyou.txt --max-passwords 50000
+poetry run python main.py crack -t <target_hash> -a md5 -m markov -w data/rockyou.txt --max-passwords 50000
 ```
 
 #### Brute Force Attack
 ```bash
-python main.py crack -t <target_hash> -a sha1 -m bruteforce --charset "luds" --min-length 4 --max-length 6
+poetry run python main.py crack -t <target_hash> -a sha1 -m bruteforce --charset "luds" --min-length 4 --max-length 6
 ```
 
 #### Rainbow Table Attack
 ```bash
-python main.py crack -t <target_hash> -m rainbow --rainbow-table my_table.rt
+poetry run python main.py crack -t <target_hash> -m rainbow --rainbow-table my_table.rt
 ```
 
 ### Security Tools
@@ -96,37 +83,25 @@ python main.py crack -t <target_hash> -m rainbow --rainbow-table my_table.rt
 #### Network Port Scanner
 ```bash
 # Scan single host
-python main.py scan -t 192.168.1.1 -p 1-1000 --threads 50
+poetry run python main.py scan -t 192.168.1.1 -p 1-1000 --threads 50
 
 # Scan network range
-python main.py scan -t 192.168.1.0/24 -p 22,80,443,3389
-```
-
-#### Advanced Keylogger
-```bash
-# Basic keylogging
-python main.py keylog -o keystrokes.txt
-
-# Stealth mode with window capture
-python main.py keylog -s --capture-window -o keylog.txt
-
-# Timed operation (5 minutes)
-python main.py keylog -d 300 -o session.txt
+poetry run python main.py scan -t 192.168.1.0/24 -p 22,80,443,3389
 ```
 
 #### Encoding/Decoding Tools
 ```bash
 # Base64 encode
-python main.py encode -d "hello world" -o encode -e base64
+poetry run python main.py encode -d "hello world" -o encode -e base64
 
 # URL decode
-python main.py encode -d "hello%20world" -o decode -e url
+poetry run python main.py encode -d "hello%20world" -o decode -e url
 
 # Hex encode
-python main.py encode -d "secret" -o encode -e hex
+poetry run python main.py encode -d "secret" -o encode -e hex
 
 # HTML encode
-python main.py encode -d "<script>alert('xss')</script>" -o encode -e html
+poetry run python main.py encode -d "<script>alert('xss')</script>" -o encode -e html
 ```
 
 ### Password Analysis & Utilities
@@ -134,19 +109,19 @@ python main.py encode -d "<script>alert('xss')</script>" -o encode -e html
 #### Password Strength Analysis
 ```bash
 # Single password
-python main.py analyze -p "MyPassword123!"
+poetry run python main.py analyze -p "MyPassword123!"
 
 # Analyze password file
-python main.py analyze -f passwords.txt
+poetry run python main.py analyze -f passwords.txt
 ```
 
 #### Password Hashing
 ```bash
 # Hash a password
-python main.py crack -p "mypassword" -a bcrypt
+poetry run python main.py crack -p "mypassword" -a bcrypt
 
 # Auto-detect hash type
-python main.py crack -t "5e884898da28047151d0e56f8dc62927" -m dictionary
+poetry run python main.py crack -t "5e884898da28047151d0e56f8dc62927" -m dictionary
 ```
 
 ## 🔧 Tool Overview
@@ -157,9 +132,8 @@ python main.py crack -t "5e884898da28047151d0e56f8dc62927" -m dictionary
 - **Description**: Traditional wordlist-based password recovery
 - **Features**: 
   - Multi-threaded processing
-  - Support for large wordlists
+  - Support for large wordlists (with automatic download of `rockyou.txt`)
   - Progress tracking
-  - Custom wordlist support
 - **Best For**: Common passwords, dictionary words
 
 #### 2. Markov Chain Attack
@@ -213,13 +187,6 @@ python main.py crack -t "5e884898da28047151d0e56f8dc62927" -m dictionary
 - Host discovery
 - Service detection
 
-#### Advanced Keylogger
-- Keystroke logging with timestamps
-- Window title capture
-- Stealth mode operation
-- Timed execution
-- Ethical usage warnings
-
 #### Encoding/Decoding Utilities
 - Base64 encoding/decoding
 - URL encoding/decoding  
@@ -233,8 +200,7 @@ sec-suite/
 ├── main.py                     # Main command-line interface
 ├── run.py                      # Interactive mode launcher
 ├── interactive_cli.py          # Interactive menu system
-├── cli.py                      # Legacy CLI interface
-├── requirements.txt            # Python dependencies
+├── pyproject.toml              # Python dependencies (managed by Poetry)
 │
 ├── attacks/                    # Password cracking modules
 │   ├── dictionary.py           # Dictionary attack implementation
@@ -243,20 +209,17 @@ sec-suite/
 │   └── rainbow.py              # Rainbow table attack
 │
 ├── tools/                      # Security utilities
-│   ├── keylogger.py            # Advanced keylogging
 │   ├── network_scanner.py      # Port scanning
 │   └── encoder.py              # Encoding/decoding
 │
 ├── utils/                      # Core utilities
 │   ├── banner.py               # Application branding
 │   ├── crypto.py               # Cryptographic functions
-│   └── password_analyzer.py    # Strength analysis
+│   ├── password_analyzer.py    # Strength analysis
+│   └── data_downloader.py      # Automatic wordlist downloader
 │
-├── data/                       # Data files
-│   └── rockyou.txt             # Example wordlist
-│
-└── docs/                       # Documentation
-    └── examples/               # Usage examples
+└── data/                       # Data files (e.g., rockyou.txt)
+    └── .gitkeep
 ```
 
 ## 🎯 Advanced Usage Examples
@@ -264,42 +227,42 @@ sec-suite/
 ### Comprehensive Password Audit
 ```bash
 # Step 1: Analyze password strength
-python main.py analyze -f user_passwords.txt
+poetry run python main.py analyze -f user_passwords.txt
 
 # Step 2: Test against common hashes
-python main.py crack -t "5d41402abc4b2a76b9719d911017c592" -m dictionary -w data/rockyou.txt
+poetry run python main.py crack -t "5d41402abc4b2a76b9719d911017c592" -m dictionary
 
 # Step 3: Brute force short passwords
-python main.py crack -t "7c6a180b36896a0a8c02787eeafb0e4c" -m bruteforce --min-length 1 --max-length 4
+poetry run python main.py crack -t "7c6a180b36896a0a8c02787eeafb0e4c" -m bruteforce --min-length 1 --max-length 4
 ```
 
 ### Network Security Assessment
 ```bash
 # Discover live hosts and open ports
-python main.py scan -t 192.168.1.0/24 -p 21,22,23,80,443,3389
+poetry run python main.py scan -t 192.168.1.0/24 -p 21,22,23,80,443,3389
 
 # Generate report of network services
-python main.py scan -t 10.0.0.1-50 -p 1-1000 --threads 100
+poetry run python main.py scan -t 10.0.0.1-50 -p 1-1000 --threads 100
 ```
 
 ### Password Hash Analysis
 ```bash
 # Identify unknown hash types
-python main.py crack -t "e10adc3949ba59abbe56e057f20f883e" -m dictionary
+poetry run python main.py crack -t "e10adc3949ba59abbe56e057f20f883e" -m dictionary
 
 # Test multiple hash algorithms
 for algo in md5 sha1 sha256 sha512; do
-    python main.py crack -p "password123" -a $algo
+    poetry run python main.py crack -p "password123" -a $algo
 done
 ```
 
 ## ⚙️ Configuration
 
 ### Custom Wordlists
-Place your wordlist files in the `data/` directory:
+Place your wordlist files in the `data/` directory. The application will use `data/rockyou.txt` by default and will download it if it's missing.
 ```bash
 cp my_wordlist.txt data/
-python main.py crack -t <hash> -m dictionary -w data/my_wordlist.txt
+poetry run python main.py crack -t <hash> -m dictionary -w data/my_wordlist.txt
 ```
 
 ### Thread Configuration
@@ -342,21 +305,12 @@ Users are solely responsible for ensuring they have proper authorization before 
 
 **Import errors:**
 ```bash
-# Reinstall dependencies
-pip install --force-reinstall -r requirements.txt
+# Reinstall dependencies with Poetry
+poetry install
 ```
 
 **Missing wordlists:**
-```bash
-# Download rockyou.txt or use custom wordlist
-wget https://github.com/brannondorsey/naive-hashcat/releases/download/data/rockyou.txt -O data/rockyou.txt
-```
-
-**Permission errors (Linux):**
-```bash
-# Keylogger may require root privileges
-sudo python main.py keylog -o keystrokes.txt
-```
+The `rockyou.txt` wordlist will be downloaded automatically on first use if it's missing. If you want to use a different wordlist, place it in the `data/` directory.
 
 **Performance issues:**
 - Reduce thread count with `--threads` parameter
@@ -367,7 +321,7 @@ sudo python main.py keylog -o keystrokes.txt
 
 1. Check the `sec-suite.log` file for detailed error information
 2. Ensure all dependencies are properly installed
-3. Verify Python version (3.8+ required)
+3. Verify Python version (3.10+ required)
 4. Check file permissions and paths
 
 ## 🤝 Contributing
@@ -384,11 +338,7 @@ We welcome contributions! Please see our contributing guidelines:
 ```bash
 git clone https://github.com/gab-dev-7/sec-suite.git
 cd sec-suite
-python -m venv venv
-source venv/bin/activate  # Linux/Mac
-# OR
-venv\Scripts\activate    # Windows
-pip install -r requirements.txt
+poetry install
 ```
 
 ## 📄 License

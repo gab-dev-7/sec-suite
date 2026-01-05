@@ -3,7 +3,7 @@
 This guide serves as a blended tutorial, wiki, and documentation for SEC-Suite, an advanced CLI security toolkit designed for educational and authorized security testing. It explains core concepts from the ground up, assuming no prior knowledge of security theories or technologies, while providing step-by-step instructions for implementation and use. We'll cover everything from basic ideas like passwords and networks to advanced features, with clear examples and professional insights.
 
 ### Key Points
-- **SEC-Suite Overview**: A free, open-source tool for security testing, including password cracking, network scanning, keylogging, and encoding utilities. It's built in Python and emphasizes ethical use only.
+- **SEC-Suite Overview**: A free, open-source tool for security testing, including password cracking, network scanning, and encoding utilities. It's built in Python and emphasizes ethical use only.
 - **Beginner-Friendly Learning Path**: Start with installation, then explore each tool's theory and usage. Concepts are explained simply, building from basics like "what is a hash?" to advanced topics like Markov chains.
 - **Ethical Emphasis**: Always obtain permission before using; misuse can lead to legal issues. Research suggests responsible security tools enhance cybersecurity awareness, but they must comply with laws like the Computer Fraud and Abuse Act in the U.S.
 - **Potential Challenges**: Performance depends on your hardware; multi-threading can speed things up but may require adjusting based on your CPU. Evidence leans toward testing on virtual machines to avoid risks.
@@ -13,9 +13,9 @@ This guide serves as a blended tutorial, wiki, and documentation for SEC-Suite, 
 Begin by understanding SEC-Suite's purpose: it's a command-line interface (CLI) tool, meaning you interact with it via text commands in a terminal. No graphical interface—think of it as typing instructions to a smart assistant for security tasks.
 
 **System Requirements**:
-- Python 3.6+ (most modern systems have this).
-- Libraries like `hashlib`, `pynput`, and `scapy` (installed via requirements.txt).
-- A wordlist like rockyou.txt for password attacks (included in the repo or downloadable from trusted sources).
+- Python 3.10+
+- Poetry for dependency management.
+- A wordlist like rockyou.txt for password attacks (will be downloaded automatically on first use).
 
 **Why Use This Tool?**  
 Security testing helps identify vulnerabilities, much like a doctor running tests to prevent illness. However, it's controversial—some view it as essential for defense, while others worry about misuse. This guide promotes defensive, educational applications.
@@ -25,7 +25,6 @@ Before diving into usage, let's break down key ideas:
 
 - **Passwords and Hashes**: A password is like a key to a lock. Systems store them as "hashes"—scrambled versions using math functions (e.g., MD5 turns "password" into "5f4dcc3b5aa765d61d8327deb882cf99"). Cracking reverses this to guess the original.
 - **Networks and Ports**: Imagine the internet as roads connecting houses (devices). Ports are like doors on those houses (e.g., port 80 for web traffic). Scanning checks which doors are open, helping assess security.
-- **Keylogging**: Records keystrokes, like a digital note-taker. Useful for testing input security but highly sensitive—never use without consent.
 - **Encoding**: Converts data into different formats for safe transmission (e.g., Base64 turns text into a string of letters/numbers/symbols).
 
 These build the foundation for SEC-Suite's tools.
@@ -53,7 +52,6 @@ Security toolkits like this draw from decades of cybersecurity evolution. Passwo
 |----------------------|----------------------------|-----------------------|--------------------|
 | Password Cracking   | Dictionary, Markov, Brute, Rainbow | Advanced GPU support | N/A               |
 | Network Scanning    | Multi-threaded port scan  | N/A                  | Advanced scripting|
-| Keylogging          | Stealth with window capture| N/A                  | N/A               |
 | Encoding Tools      | Base64, URL, HTML, Hex    | Limited              | N/A               |
 | Ease for Beginners  | High (CLI with examples)  | Medium (complex flags)| High              |
 | License             | MIT                       | MIT                  | GPL               |
@@ -77,9 +75,9 @@ Installing SEC-Suite is straightforward, similar to setting up any Python projec
 
 3. **Install Dependencies**:
    ```
-   pip install -r requirements.txt
+   poetry install
    ```
-   PIP is Python's package manager. Requirements include libraries like `hashlib` for hashing and `threading` for multi-tasking.
+   Poetry will handle all dependencies and create a virtual environment for the project.
 
 **Troubleshooting**:
 - If PIP fails, ensure Python is installed (download from python.org).
@@ -118,12 +116,6 @@ Involves probing devices for open ports. Ports range 0-65535; well-known include
 - Theory: Uses protocols like TCP/IP. A scan sends packets and listens for responses, mapping network topology.
 - Multi-threading: Runs scans in parallel threads, like multiple workers checking doors simultaneously.
 
-#### 3.3 Keylogging
-Captures keyboard input. Advanced versions log window titles for context.
-
-- Theory: Hooks into OS events. Ethical use: testing anti-keylogger software.
-- Stealth Mode: Minimizes detection, but remember: this is intrusive.
-
 #### 3.4 Encoding/Decoding
 Transforms data formats.
 
@@ -133,26 +125,26 @@ Transforms data formats.
 - Hex: Binary to hexadecimal (e.g., "A" to 41).
 
 ### 4. Usage Tutorial
-Run commands from the project directory using `python main.py [command] [options]`.
+Run commands from the project directory using `poetry run python main.py [command] [options]`.
 
 #### 4.1 Password Cracking
 Start with auto-detection for unknown hashes.
 
 **Example: Dictionary Attack**
 ```
-python main.py crack -t 5f4dcc3b5aa765d61d8327deb882cf99 -a md5 -m dictionary -w data/rockyou.txt --threads 4
+poetry run python main.py crack -t 5f4dcc3b5aa765d61d8327deb882cf99 -a md5 -m dictionary -w data/rockyou.txt --threads 4
 ```
 - Explanation: Targets MD5 hash of "password". Threads split work for speed.
 
 **Markov Attack**
 ```
-python main.py crack -t <hash> -a sha256 -m markov -w data/rockyou.txt --max-passwords 100000
+poetry run python main.py crack -t <hash> -a sha256 -m markov -w data/rockyou.txt --max-passwords 100000
 ```
 - Builds a model from wordlist, generates candidates.
 
 **Brute Force**
 ```
-python main.py crack -t <hash> -a sha1 -m bruteforce --charset "lud" --min-length 3 --max-length 5
+poetry run python main.py crack -t <hash> -a sha1 -m bruteforce --charset "lud" --min-length 3 --max-length 5
 ```
 - "lud": lower, upper, digits.
 
@@ -160,23 +152,15 @@ python main.py crack -t <hash> -a sha1 -m bruteforce --charset "lud" --min-lengt
 
 #### 4.2 Network Scanning
 ```
-python main.py scan -t 192.168.1.1 -p 1-1024 --threads 100
+poetry run poetry run python main.py scan -t 192.168.1.1 -p 1-1024 --threads 100
 ```
 - Scans ports 1-1024 on a local IP. For ranges: `-t 192.168.1.0/24`.
 
 **Interpretation**: Open ports might indicate services; close unnecessary ones for security.
 
-#### 4.3 Keylogging
-```
-python main.py keylog -o output.txt -s --capture-window -d 600
-```
-- Runs stealthily for 10 minutes, capturing windows.
-
-**Ethical Note**: Test only on your devices.
-
 #### 4.4 Encoding
 ```
-python main.py encode -d "Test string" -o encode -e base64
+poetry run poetry run python main.py encode -d "Test string" -o encode -e base64
 ```
 - Outputs: VGVzdCBzdHJpbmc=
 
@@ -193,7 +177,6 @@ Decode with `-o decode`.
 |---------------|----------------------------------------|---------------|
 | Cracking     | Increase threads, use strong wordlists | 2-5x faster  |
 | Scanning     | Limit ports, use CIDR notation         | Reduced time |
-| Keylogging   | Short durations for testing            | Lower risk   |
 
 ### 6. Security and Ethics
 - **Legal Framework**: Comply with laws; e.g., unauthorized scanning is illegal in many jurisdictions.
