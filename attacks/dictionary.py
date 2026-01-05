@@ -3,12 +3,19 @@ import queue
 import time
 from typing import Optional
 from utils.crypto import verify_password
+import os
 
 
 class DictionaryAttack:
     """Multi-threaded dictionary attack"""
 
     def __init__(self, wordlist_path: str, hash_type: str, max_threads: int = 4):
+        if not os.path.exists(wordlist_path):
+            raise FileNotFoundError(
+                f"Wordlist not found at '{wordlist_path}'. "
+                "Please ensure the file exists. "
+                "You may need to download a wordlist like 'rockyou.txt' and place it in the 'data' directory."
+            )
         self.wordlist_path = wordlist_path
         self.hash_type = hash_type
         self.max_threads = max_threads

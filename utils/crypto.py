@@ -6,6 +6,7 @@ import html
 import re
 from typing import Optional
 import argon2
+import os
 
 
 def hash_password(password: str, algorithm: str) -> str:
@@ -25,14 +26,16 @@ def hash_password(password: str, algorithm: str) -> str:
         return bcrypt.hashpw(password_bytes, salt).decode("utf-8")
     elif algorithm == "scrypt":
         # Using hashlib's scrypt (available in Python 3.6+)
-        salt = bcrypt.gensalt()[:16]  # Use part of bcrypt salt as scrypt salt
-        return hashlib.scrypt(
+        salt = os.urandom(16)
+        hashed_password = hashlib.scrypt(
             password_bytes,
             salt=salt,
             n=2**14,  # CPU/memory cost parameter
             r=8,  # Block size parameter
             p=1,  # Parallelization parameter
-        ).hex()
+            dklen=64,
+        )
+        return salt.hex() + "$" + hashed_password.hex()
     elif algorithm == "argon2":
         ph = argon2.PasswordHasher()
         return ph.hash(password_bytes)
@@ -48,11 +51,19 @@ def verify_password(password: str, hash_value: str, algorithm: str) -> bool:
         elif algorithm == "bcrypt":
             return bcrypt.checkpw(password.encode("utf-8"), hash_value.encode("utf-8"))
         elif algorithm == "scrypt":
-            # For scrypt, we'd need to store the salt separately
-            # This is a simplified version
             try:
-                new_hash = hash_password(password, algorithm)
-                return new_hash == hash_value
+                salt_hex, hashed_password_hex = hash_value.split("$")
+                salt = bytes.fromhex(salt_hex)
+                password_bytes = password.encode("utf-8")
+                new_hash = hashlib.scrypt(
+                    password_bytes,
+                    salt=salt,
+                    n=2**14,
+                    r=8,
+                    p=1,
+                    dklen=64,
+                )
+                return new_hash.hex() == hashed_password_hex
             except:
                 return False
         elif algorithm == "argon2":
@@ -85,7 +96,7 @@ def identify_hash_type(hash_string: str) -> Optional[str]:
         return "bcrypt"
     elif hash_string.startswith("$argon2"):
         return "argon2"
-    elif len(hash_string) == 64:  # scrypt typically produces 64 char hex
+    elif re.match(r"^[a-f0-9]{32}\$[a-f0-9]{128}$", hash_string):
         return "scrypt"
 
     return None

@@ -2,6 +2,8 @@ import os
 import random
 from typing import List, Set
 from attacks.markov import MarkovModel
+import pickle
+from utils.password_analyzer import analyze_password_strength
 
 
 class AdvancedPasswordGenerator:
@@ -62,83 +64,20 @@ class AdvancedPasswordGenerator:
         return self.markov.generate_password(max_length)
 
     def save_trained_model(self, filepath):
-        """Save the trained Markov model (simplified - just note that model is trained)"""
-        # Since our MarkovModel doesn't have save/load, we'll just note the training file
-        with open(filepath, "w") as f:
-            f.write("Markov model training indicator - model is trained\n")
-        print(f"Model training state saved to {filepath}")
+        """Save the trained Markov model using pickle"""
+        with open(filepath, "wb") as f:
+            pickle.dump(self.markov, f)
+        print(f"Model saved to {filepath}")
 
     def load_trained_model(self, filepath):
-        """Load a pre-trained Markov model (simplified)"""
-        # This is a placeholder since our MarkovModel doesn't support serialization
-        # In a real implementation, you'd want to add pickle support to MarkovModel
+        """Load a pre-trained Markov model"""
         if os.path.exists(filepath):
+            with open(filepath, "rb") as f:
+                self.markov = pickle.load(f)
             self.trained = True
-            print(f"Model training state loaded from {filepath}")
+            print(f"Model loaded from {filepath}")
         else:
             raise FileNotFoundError(f"Model file not found: {filepath}")
-
-    def analyze_password_strength(self, password: str) -> dict:
-        """Analyze the strength of a generated password"""
-        if not password:
-            return {"score": 0, "feedback": ["Empty password"]}
-
-        score = 0
-        feedback = []
-
-        # Length check
-        length = len(password)
-        if length >= 12:
-            score += 25
-            feedback.append("Good length (12+ characters)")
-        elif length >= 8:
-            score += 15
-            feedback.append("Acceptable length (8-11 characters)")
-        else:
-            score += 5
-            feedback.append("Short password (less than 8 characters)")
-
-        # Character variety
-        has_upper = any(c.isupper() for c in password)
-        has_lower = any(c.islower() for c in password)
-        has_digit = any(c.isdigit() for c in password)
-        has_special = any(not c.isalnum() for c in password)
-
-        char_variety = sum([has_upper, has_lower, has_digit, has_special])
-        if char_variety == 4:
-            score += 40
-            feedback.append("Excellent character variety")
-        elif char_variety == 3:
-            score += 25
-            feedback.append("Good character variety")
-        elif char_variety == 2:
-            score += 15
-            feedback.append("Basic character variety")
-        else:
-            score += 5
-            feedback.append("Poor character variety")
-
-        # Entropy estimation
-        unique_chars = len(set(password))
-        entropy_per_char = unique_chars**0.5
-        total_entropy = length * entropy_per_char
-
-        if total_entropy > 50:
-            score += 35
-            feedback.append(f"High entropy ({total_entropy:.1f} bits)")
-        elif total_entropy > 30:
-            score += 25
-            feedback.append(f"Moderate entropy ({total_entropy:.1f} bits)")
-        else:
-            score += 10
-            feedback.append(f"Low entropy ({total_entropy:.1f} bits)")
-
-        return {
-            "score": min(100, score),
-            "feedback": feedback,
-            "length": length,
-            "entropy": total_entropy,
-        }
 
 
 # Example usage
@@ -149,7 +88,6 @@ if __name__ == "__main__":
     passwords = generator.generate_passwords(count=10, min_length=8, max_length=12)
 
     for i, pwd in enumerate(passwords, 1):
-        analysis = generator.analyze_password_strength(pwd)
-        print(f"{i:2d}. {pwd} (Score: {analysis['score']}/100)")
-        if analysis["score"] < 60:
-            print(f"     Feedback: {', '.join(analysis['feedback'])}")
+        score = analyze_password_strength(pwd)
+        print(f"{i:2d}. {pwd} (Score: {score}/100)")
+
