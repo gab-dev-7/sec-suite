@@ -3,92 +3,8 @@ import pickle
 import threading
 from typing import Dict, List, Set, Optional
 from utils.crypto import hash_password, verify_password
-
-
-class MarkovModel:
-    """Markov chain model for password generation with serialization support"""
-
-    def __init__(self, order: int = 3):
-        self.order = order
-        self.model: Dict[str, List[str]] = {}
-        self.start_states: List[str] = []
-
-    def train(self, passwords: List[str]):
-        """Train the Markov model on a list of passwords"""
-        print("Training Markov model...")
-
-        for password in passwords:
-            if len(password) < self.order:
-                continue
-
-            # Add start state
-            start = password[: self.order]
-            self.start_states.append(start)
-
-            # Build transitions
-            for i in range(len(password) - self.order):
-                state = password[i : i + self.order]
-                next_char = password[i + self.order]
-
-                if state not in self.model:
-                    self.model[state] = []
-                self.model[state].append(next_char)
-
-        print(
-            f"Model trained with {len(self.model)} states and {len(self.start_states)} start states"
-        )
-
-    def generate_password(self, max_length: int = 20) -> str:
-        """Generate a password using the Markov model"""
-        if not self.start_states:
-            return ""
-
-        # Choose random start state
-        state = random.choice(self.start_states)
-        password = state
-
-        while len(password) < max_length:
-            if state not in self.model or not self.model[state]:
-                break
-
-            # Choose next character based on frequency
-            next_char = random.choice(self.model[state])
-            password += next_char
-
-            # Update state (slide window)
-            state = password[-self.order :]
-
-        return password
-
-    def save_model(self, filepath: str):
-        """Save the trained model to a file"""
-        with open(filepath, "wb") as f:
-            pickle.dump(
-                {
-                    "order": self.order,
-                    "model": self.model,
-                    "start_states": self.start_states,
-                },
-                f,
-            )
-        print(f"Model saved to {filepath}")
-
-    def load_model(self, filepath: str):
-        """Load a trained model from a file"""
-        with open(filepath, "rb") as f:
-            data = pickle.load(f)
-            self.order = data["order"]
-            self.model = data["model"]
-            self.start_states = data["start_states"]
-        print(f"Model loaded from {filepath}")
-
-
-import random
-import pickle
-import threading
-from typing import Dict, List, Set, Optional
-from utils.crypto import hash_password, verify_password
 import os
+from utils.data_downloader import download_rockyou_wordlist
 
 
 class MarkovModel:
@@ -179,6 +95,7 @@ class MarkovAttack:
         max_threads: int = 4,
         max_passwords: int = 100000,
     ):
+        download_rockyou_wordlist()
         if not os.path.exists(training_file):
             raise FileNotFoundError(
                 f"Training file not found at '{training_file}'. "

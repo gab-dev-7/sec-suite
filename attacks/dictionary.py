@@ -4,12 +4,14 @@ import time
 from typing import Optional
 from utils.crypto import verify_password
 import os
+from utils.data_downloader import download_rockyou_wordlist
 
 
 class DictionaryAttack:
     """Multi-threaded dictionary attack"""
 
     def __init__(self, wordlist_path: str, hash_type: str, max_threads: int = 4):
+        download_rockyou_wordlist()
         if not os.path.exists(wordlist_path):
             raise FileNotFoundError(
                 f"Wordlist not found at '{wordlist_path}'. "
