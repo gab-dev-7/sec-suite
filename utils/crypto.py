@@ -25,7 +25,7 @@ def hash_password(password: str, algorithm: str) -> str:
         salt = bcrypt.gensalt()
         return bcrypt.hashpw(password_bytes, salt).decode("utf-8")
     elif algorithm == "scrypt":
-        # Using hashlib's scrypt (available in Python 3.6+)
+        # Using hashlib's scrypt
         salt = os.urandom(16)
         hashed_password = hashlib.scrypt(
             password_bytes,
