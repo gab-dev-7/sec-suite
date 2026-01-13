@@ -1,6 +1,5 @@
 import threading
 import queue
-import time
 from typing import Optional
 from utils.crypto import verify_password
 import os
@@ -28,7 +27,7 @@ class DictionaryAttack:
             with open(self.wordlist_path, "r", encoding="utf-8", errors="ignore") as f:
                 for line_num, line in enumerate(f, 1):
                     password = line.strip()
-                    if password:  # Skip empty lines
+                    if password:
                         password_queue.put(password)
 
                     if line_num % 10000 == 0:

@@ -10,10 +10,10 @@ class BruteForceAttack:
 
     # Character sets
     CHAR_SETS = {
-        "l": string.ascii_lowercase,  # lowercase letters
-        "u": string.ascii_uppercase,  # uppercase letters
-        "d": string.digits,  # digits
-        "s": string.punctuation,  # special characters
+        "l": string.ascii_lowercase,
+        "u": string.ascii_uppercase,
+        "d": string.digits,
+        "s": string.punctuation,
     }
 
     def __init__(

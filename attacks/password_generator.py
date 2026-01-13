@@ -90,4 +90,3 @@ if __name__ == "__main__":
     for i, pwd in enumerate(passwords, 1):
         score = analyze_password_strength(pwd)
         print(f"{i:2d}. {pwd} (Score: {score}/100)")
-

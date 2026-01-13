@@ -86,7 +86,9 @@ class NetworkScanner:
         hosts = self._get_hosts()
         self.total_ports = len(hosts) * len(self.ports_to_scan)
 
-        print(f"Starting scan on {len(hosts)} host(s) for {len(self.ports_to_scan)} ports each.")
+        print(
+            f"Starting scan on {len(hosts)} host(s) for {len(self.ports_to_scan)} ports each."
+        )
         print(f"Total ports to scan: {self.total_ports}")
         print(f"Using {self.max_threads} threads. Timeout: {self.timeout}s.")
         print("-" * 50)
@@ -97,7 +99,7 @@ class NetworkScanner:
                 print(f"\nScanning host: {host}")
                 self.open_ports = []
                 self.scanned_ports = 0
-                
+
                 port_queue = queue.Queue()
                 for port in self.ports_to_scan:
                     port_queue.put(port)
@@ -110,17 +112,17 @@ class NetworkScanner:
                     thread.daemon = True
                     thread.start()
                     threads.append(thread)
-                
+
                 progress_thread = threading.Thread(target=self._progress_reporter)
                 progress_thread.daemon = True
                 progress_thread.start()
 
                 port_queue.join()
-                self.stop_event.set() 
-                
+                self.stop_event.set()
+
                 for thread in threads:
                     thread.join()
-                
+
                 progress_thread.join()
                 self.stop_event.clear()
 
@@ -139,4 +141,3 @@ class NetworkScanner:
         print("SCAN COMPLETE")
         print(f"Total scan duration: {end_time - start_time:.2f} seconds")
         print("=" * 50)
-
