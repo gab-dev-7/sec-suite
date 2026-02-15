@@ -1,5 +1,4 @@
-import threading
-import queue
+import multiprocessing
 from typing import Optional
 from utils.crypto import verify_password
 import os
@@ -7,7 +6,7 @@ from utils.data_downloader import download_rockyou_wordlist
 
 
 class DictionaryAttack:
-    """Multi-threaded dictionary attack"""
+    """Multi-process dictionary attack"""
 
     def __init__(self, wordlist_path: str, hash_type: str, max_threads: int = 4):
         download_rockyou_wordlist()
@@ -21,7 +20,7 @@ class DictionaryAttack:
         self.hash_type = hash_type
         self.max_threads = max_threads
 
-    def _password_producer(self, password_queue: queue.Queue):
+    def _password_producer(self, password_queue: multiprocessing.Queue):
         """Produce passwords from wordlist"""
         try:
             with open(self.wordlist_path, "r", encoding="utf-8", errors="ignore") as f:
@@ -30,7 +29,7 @@ class DictionaryAttack:
                     if password:
                         password_queue.put(password)
 
-                    if line_num % 10000 == 0:
+                    if line_num % 50000 == 0:
                         print(f"Loaded {line_num} passwords...")
 
             # Signal end of production
@@ -43,7 +42,7 @@ class DictionaryAttack:
                 password_queue.put(None)
 
     def _password_consumer(
-        self, password_queue: queue.Queue, target_hash: str, result_queue: queue.Queue
+        self, password_queue: multiprocessing.Queue, target_hash: str, result_queue: multiprocessing.Queue
     ):
         """Consume passwords and test against hash"""
         attempts = 0
@@ -53,19 +52,16 @@ class DictionaryAttack:
 
             # Check for termination signal
             if password is None:
-                password_queue.task_done()
                 break
 
             attempts += 1
-            if attempts % 1000 == 0:
-                print(f"Tested {attempts} passwords...")
+            if attempts % 10000 == 0:
+                # Note: Progress reporting from processes can be messy, but keeping it simple for now
+                pass
 
             if verify_password(password, target_hash, self.hash_type):
                 result_queue.put(password)
-                password_queue.task_done()
                 return
-
-            password_queue.task_done()
 
         result_queue.put(None)
 
@@ -73,44 +69,48 @@ class DictionaryAttack:
         """Perform dictionary attack"""
         print(f"Starting dictionary attack on {self.hash_type} hash")
         print(f"Using wordlist: {self.wordlist_path}")
+        print(f"Using {self.max_threads} processes")
 
-        password_queue = queue.Queue(maxsize=10000)
-        result_queue = queue.Queue()
+        password_queue = multiprocessing.Queue(maxsize=10000)
+        result_queue = multiprocessing.Queue()
 
-        # Start producer thread
-        producer_thread = threading.Thread(
+        # Start producer process
+        producer_process = multiprocessing.Process(
             target=self._password_producer, args=(password_queue,)
         )
-        producer_thread.daemon = True
-        producer_thread.start()
+        producer_process.daemon = True
+        producer_process.start()
 
-        # Start consumer threads
-        consumer_threads = []
+        # Start consumer processes
+        consumer_processes = []
         for _ in range(self.max_threads):
-            thread = threading.Thread(
+            process = multiprocessing.Process(
                 target=self._password_consumer,
                 args=(password_queue, target_hash, result_queue),
             )
-            thread.daemon = True
-            thread.start()
-            consumer_threads.append(thread)
+            process.daemon = True
+            process.start()
+            consumer_processes.append(process)
 
         # Wait for a result
         found_password = None
         results_received = 0
 
-        while results_received < self.max_threads and found_password is None:
-            try:
-                result = result_queue.get(timeout=1)
+        try:
+            while results_received < self.max_threads and found_password is None:
+                result = result_queue.get()
                 if result is not None:
                     found_password = result
+                    # Terminate other processes as soon as we find it
+                    for p in consumer_processes:
+                        p.terminate()
+                    producer_process.terminate()
                 results_received += 1
-            except queue.Empty:
-                pass
-
-        # Clean up
-        if found_password is None:
-            # Wait for all threads to finish naturally
-            password_queue.join()
+        except KeyboardInterrupt:
+            print("\n[!] Attack interrupted by user")
+            for p in consumer_processes:
+                p.terminate()
+            producer_process.terminate()
+            raise
 
         return found_password

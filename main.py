@@ -80,24 +80,6 @@ def password_cracker_mode(args):
         print(f"Hash ({hash_type}): {hash_result}")
 
 
-def keylogger_mode(args):
-    """Handle keylogging operations"""
-    from tools.keylogger import Keylogger
-
-    keylogger = Keylogger(
-        output_file=args.output,
-        stealth_mode=args.stealth,
-        capture_window=args.capture_window,
-    )
-
-    if args.duration:
-        print(f"Starting keylogger for {args.duration} seconds...")
-        keylogger.run_with_duration(args.duration)
-    else:
-        print("Starting keylogger (Press Ctrl+C to stop)...")
-        keylogger.run()
-
-
 def network_scanner_mode(args):
     """Handle network scanning operations"""
     from tools.network_scanner import NetworkScanner

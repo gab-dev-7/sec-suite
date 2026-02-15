@@ -1,12 +1,12 @@
 import itertools
-import threading
+import multiprocessing
 import string
-from typing import Optional
+from typing import Optional, List
 from utils.crypto import verify_password
 
 
 class BruteForceAttack:
-    """Brute force password attack with configurable character sets"""
+    """Multi-process brute force password attack"""
 
     # Character sets
     CHAR_SETS = {
@@ -38,10 +38,31 @@ class BruteForceAttack:
                 charset += self.CHAR_SETS[char]
         return "".join(sorted(set(charset)))  # Remove duplicates
 
-    def generate_combinations(self, length: int):
-        """Generate all combinations for a given length"""
-        for combo in itertools.product(self.charset, repeat=length):
-            yield "".join(combo)
+    def _worker(
+        self, 
+        target_hash: str, 
+        length: int, 
+        first_chars: List[str], 
+        result_queue: multiprocessing.Queue
+    ):
+        """Worker process to test a subset of combinations"""
+        for first_char in first_chars:
+            # If length is 1, just test the first_char
+            if length == 1:
+                if verify_password(first_char, target_hash, self.hash_type):
+                    result_queue.put(first_char)
+                    return
+                continue
+
+            # For length > 1, generate combinations starting with first_char
+            remaining_len = length - 1
+            for combo in itertools.product(self.charset, repeat=remaining_len):
+                password = first_char + "".join(combo)
+                if verify_password(password, target_hash, self.hash_type):
+                    result_queue.put(password)
+                    return
+        
+        result_queue.put(None)
 
     def crack(self, target_hash: str) -> Optional[str]:
         """Perform brute force attack"""
@@ -49,44 +70,50 @@ class BruteForceAttack:
         print(f"Character set: {self.charset}")
         print(f"Password length: {self.min_length}-{self.max_length}")
         print(f"Total combinations: {self.calculate_total_combinations()}")
+        print(f"Using {self.max_threads} processes")
 
-        found_password: Optional[str] = None
-        lock = threading.Lock()
-        current_length = self.min_length
+        for length in range(self.min_length, self.max_length + 1):
+            print(f"Trying length {length}...")
+            
+            result_queue = multiprocessing.Queue()
+            processes = []
+            
+            # Divide the charset among workers
+            charset_list = list(self.charset)
+            chunk_size = max(1, len(charset_list) // self.max_threads)
+            
+            for i in range(0, len(charset_list), chunk_size):
+                chars_chunk = charset_list[i : i + chunk_size]
+                if not chars_chunk:
+                    continue
+                    
+                p = multiprocessing.Process(
+                    target=self._worker,
+                    args=(target_hash, length, chars_chunk, result_queue)
+                )
+                p.daemon = True
+                p.start()
+                processes.append(p)
 
-        def worker():
-            nonlocal found_password, current_length
-            while found_password is None and current_length <= self.max_length:
-                # Get current length to process
-                with lock:
-                    if current_length > self.max_length:
-                        break
-                    length = current_length
-                    current_length += 1
+            # Wait for results for this length
+            found_password = None
+            finished_workers = 0
+            
+            try:
+                while finished_workers < len(processes):
+                    result = result_queue.get()
+                    if result:
+                        found_password = result
+                        for p in processes:
+                            p.terminate()
+                        return found_password
+                    finished_workers += 1
+            except KeyboardInterrupt:
+                for p in processes:
+                    p.terminate()
+                raise
 
-                print(f"Trying length {length}...")
-
-                for password in self.generate_combinations(length):
-                    if found_password is not None:
-                        break
-
-                    if verify_password(password, target_hash, self.hash_type):
-                        with lock:
-                            found_password = password
-                        break
-
-        # Create and start threads
-        threads = []
-        for _ in range(min(self.max_threads, self.max_length - self.min_length + 1)):
-            thread = threading.Thread(target=worker)
-            thread.start()
-            threads.append(thread)
-
-        # Wait for threads to complete
-        for thread in threads:
-            thread.join()
-
-        return found_password
+        return None
 
     def calculate_total_combinations(self) -> int:
         """Calculate total number of possible combinations"""

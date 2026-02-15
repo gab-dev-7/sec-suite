@@ -181,7 +181,7 @@ Decode with `-o decode`.
 ### 6. Security and Ethics
 - **Legal Framework**: Comply with laws; e.g., unauthorized scanning is illegal in many jurisdictions.
 - **Best Practices**: Use VMs (e.g., VirtualBox), anonymize tests.
-- **Controversies**: Tools like keyloggers raise privacy concerns; balance with defensive benefits.
+- **Controversies**: Security tools can be misused; balance with defensive benefits.
 
 ### 7. Contributing and Community
 Fork the repo, make changes, submit PRs. Issues for bugs.
@@ -200,7 +200,6 @@ This guide equips you to understand, implement, and extend SEC-Suite responsibly
 -  https://opensource.org/licenses/MIT - MIT License details.
 -  https://en.wikipedia.org/wiki/Cryptographic_hash_function - Hash functions explained.
 -  https://en.wikipedia.org/wiki/Port_(computer_networking) - Network ports.
--  https://en.wikipedia.org/wiki/Keystroke_logging - Keylogging overview.
 -  https://en.wikipedia.org/wiki/Character_encoding - Encoding basics.
 -  https://en.wikipedia.org/wiki/History_of_cryptography - Cryptography history.
 -  https://en.wikipedia.org/wiki/Markov_chain - Markov chains.
@@ -221,8 +220,6 @@ This guide equips you to understand, implement, and extend SEC-Suite responsibly
 -  https://benchmark.hashcat.net/ - Hashcat benchmarks.
 -  https://en.wikipedia.org/wiki/Network_scanner - Network scanning.
 -  https://docs.python.org/3/library/threading.html - Python threading.
--  https://www.kaspersky.com/resource-center/definitions/keylogger - Keylogger details.
--  https://www.wired.com/story/keylogger-malware-detection/ - Stealth keyloggers.
 -  https://en.wikipedia.org/wiki/Base64 - Base64 encoding.
 -  https://en.wikipedia.org/wiki/Percent-encoding - URL encoding.
 -  https://en.wikipedia.org/wiki/HTML - HTML escaping.

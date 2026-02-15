@@ -9,7 +9,6 @@ def show_banner():
     ║    • Password Cracking (Dictionary, Markov, Brute Force)     ║
     ║    • Multi-threaded Attacks                                  ║
     ║    • Modern Hash Support (bcrypt, scrypt, argon2)            ║
-    ║    • Advanced Keylogger with Window Capture                  ║
     ║    • Network Port Scanner                                    ║
     ║    • Encoding/Decoding Tools                                 ║
     ║    • Hash Type Auto-detection                                ║

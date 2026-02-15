@@ -1,6 +1,6 @@
 import random
 import pickle
-import threading
+import multiprocessing
 from typing import Dict, List, Set, Optional
 from utils.crypto import hash_password, verify_password
 import os
@@ -15,12 +15,14 @@ class MarkovModel:
         self.model: Dict[str, List[str]] = {}
         self.start_states: List[str] = []
 
-    def train(self, passwords: List[str]):
-        """Train the Markov model on a list of passwords"""
+    def train(self, passwords_iterator):
+        """Train the Markov model on an iterator of passwords"""
         print("Training Markov model...")
 
-        for password in passwords:
-            if len(password) < self.order:
+        count = 0
+        for password in passwords_iterator:
+            password = password.strip()
+            if not password or len(password) < self.order:
                 continue
 
             # Add start state
@@ -35,6 +37,10 @@ class MarkovModel:
                 if state not in self.model:
                     self.model[state] = []
                 self.model[state].append(next_char)
+            
+            count += 1
+            if count % 50000 == 0:
+                print(f"Processed {count} passwords for training...")
 
         print(
             f"Model trained with {len(self.model)} states and {len(self.start_states)} start states"
@@ -110,19 +116,32 @@ class MarkovAttack:
         self.trained = False
 
     def train_model(self):
-        """Train the Markov model on the provided file"""
+        """Train the Markov model on the provided file using a stream"""
         try:
-            with open(self.training_file, "r", encoding="utf-8", errors="ignore") as f:
-                passwords = [line.strip() for line in f if line.strip()]
+            def password_stream():
+                count = 0
+                with open(self.training_file, "r", encoding="utf-8", errors="ignore") as f:
+                    for line in f:
+                        yield line
+                        count += 1
+                        if count >= 100000:  # Still sample for training performance
+                            break
 
-            # Use a sample for training to avoid memory issues
-            training_sample = min(len(passwords), 100000)
-            self.model.train(passwords[:training_sample])
+            self.model.train(password_stream())
             self.trained = True
 
         except Exception as e:
             print(f"Error training Markov model: {e}")
             raise
+
+    def _worker(self, target_hash: str, num_passwords: int, result_queue: multiprocessing.Queue):
+        """Worker process to generate and test passwords"""
+        for _ in range(num_passwords):
+            password = self.model.generate_password()
+            if verify_password(password, target_hash, self.hash_type):
+                result_queue.put(password)
+                return
+        result_queue.put(None)
 
     def crack(self, target_hash: str) -> Optional[str]:
         """Attempt to crack the hash using Markov-generated passwords"""
@@ -131,36 +150,37 @@ class MarkovAttack:
 
         print(f"Starting Markov attack on {self.hash_type} hash")
         print(f"Generating up to {self.max_passwords} password candidates...")
+        print(f"Using {self.max_threads} processes")
 
-        found_password: Optional[str] = None
-        lock = threading.Lock()
-        attempts = 0
-
-        def worker():
-            nonlocal found_password, attempts
-            while found_password is None and attempts < self.max_passwords:
-                with lock:
-                    if attempts >= self.max_passwords:
-                        break
-                    attempts += 1
-                    if attempts % 1000 == 0:
-                        print(f"Tried {attempts} passwords...")
-
-                password = self.model.generate_password()
-                if verify_password(password, target_hash, self.hash_type):
-                    with lock:
-                        found_password = password
-                    return
-
-        # Create and start threads
-        threads = []
+        result_queue = multiprocessing.Queue()
+        passwords_per_process = self.max_passwords // self.max_threads
+        
+        processes = []
         for _ in range(self.max_threads):
-            thread = threading.Thread(target=worker)
-            thread.start()
-            threads.append(thread)
+            p = multiprocessing.Process(
+                target=self._worker,
+                args=(target_hash, passwords_per_process, result_queue)
+            )
+            p.daemon = True
+            p.start()
+            processes.append(p)
 
         # Wait for threads to complete
-        for thread in threads:
-            thread.join()
+        found_password = None
+        finished_workers = 0
+        
+        try:
+            while finished_workers < len(processes):
+                result = result_queue.get()
+                if result:
+                    found_password = result
+                    for p in processes:
+                        p.terminate()
+                    return found_password
+                finished_workers += 1
+        except KeyboardInterrupt:
+            for p in processes:
+                p.terminate()
+            raise
 
         return found_password
