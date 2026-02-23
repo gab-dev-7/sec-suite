@@ -1,9 +1,10 @@
 import random
-import pickle
+import json
 import multiprocessing
-from typing import Dict, List, Set, Optional
-from utils.crypto import hash_password, verify_password
 import os
+from typing import Dict, List, Set, Optional, Iterator
+from collections import Counter
+from utils.crypto import hash_password, verify_password
 from utils.data_downloader import download_rockyou_wordlist
 
 
@@ -12,22 +13,22 @@ class MarkovModel:
 
     def __init__(self, order: int = 3):
         self.order = order
-        self.model: Dict[str, List[str]] = {}
-        self.start_states: List[str] = []
+        self.model: Dict[str, Dict[str, int]] = {}
+        self.start_states: Dict[str, int] = {}
 
-    def train(self, passwords_iterator):
-        """Train the Markov model on an iterator of passwords"""
-        print("Training Markov model...")
+    def train(self, passwords: Iterator[str], max_training_samples: int = 100000):
+        """Train the Markov model on an iterator of passwords with a sample limit"""
+        print(f"Training Markov model (max samples: {max_training_samples})...")
 
         count = 0
-        for password in passwords_iterator:
+        for password in passwords:
             password = password.strip()
             if not password or len(password) < self.order:
                 continue
 
             # Add start state
             start = password[: self.order]
-            self.start_states.append(start)
+            self.start_states[start] = self.start_states.get(start, 0) + 1
 
             # Build transitions
             for i in range(len(password) - self.order):
@@ -35,24 +36,41 @@ class MarkovModel:
                 next_char = password[i + self.order]
 
                 if state not in self.model:
-                    self.model[state] = []
-                self.model[state].append(next_char)
+                    self.model[state] = {}
+                self.model[state][next_char] = self.model[state].get(next_char, 0) + 1
             
             count += 1
             if count % 50000 == 0:
                 print(f"Processed {count} passwords for training...")
+            
+            if count >= max_training_samples:
+                break
 
         print(
             f"Model trained with {len(self.model)} states and {len(self.start_states)} start states"
         )
+
+    def train_from_file(self, filepath: str, max_training_samples: int = 100000):
+        """Train Markov model from a file using streaming"""
+        if not os.path.exists(filepath):
+            raise FileNotFoundError(f"Training file not found: {filepath}")
+            
+        def file_iterator():
+            with open(filepath, "r", encoding="utf-8", errors="ignore") as f:
+                for line in f:
+                    yield line
+        
+        self.train(file_iterator(), max_training_samples)
 
     def generate_password(self, max_length: int = 20) -> str:
         """Generate a password using the Markov model"""
         if not self.start_states:
             return ""
 
-        # Choose random start state
-        state = random.choice(self.start_states)
+        # Choose random start state based on frequency
+        states = list(self.start_states.keys())
+        weights = list(self.start_states.values())
+        state = random.choices(states, weights=weights)[0]
         password = state
 
         while len(password) < max_length:
@@ -60,7 +78,9 @@ class MarkovModel:
                 break
 
             # Choose next character based on frequency
-            next_char = random.choice(self.model[state])
+            chars = list(self.model[state].keys())
+            char_weights = list(self.model[state].values())
+            next_char = random.choices(chars, weights=char_weights)[0]
             password += next_char
 
             # Update state (slide window)
@@ -70,8 +90,8 @@ class MarkovModel:
 
     def save_model(self, filepath: str):
         """Save the trained model to a file"""
-        with open(filepath, "wb") as f:
-            pickle.dump(
+        with open(filepath, "w", encoding="utf-8") as f:
+            json.dump(
                 {
                     "order": self.order,
                     "model": self.model,
@@ -83,53 +103,69 @@ class MarkovModel:
 
     def load_model(self, filepath: str):
         """Load a trained model from a file"""
-        with open(filepath, "rb") as f:
-            data = pickle.load(f)
+        with open(filepath, "r", encoding="utf-8") as f:
+            data = json.load(f)
             self.order = data["order"]
             self.model = data["model"]
             self.start_states = data["start_states"]
         print(f"Model loaded from {filepath}")
 
 
+class AdvancedPasswordGenerator:
+    """Consolidated password generator using Markov models"""
+    
+    def __init__(self, training_file: Optional[str] = None):
+        self.model = MarkovModel(order=3)
+        self.trained = False
+        if training_file:
+            self.train_from_file(training_file)
+
+    def train_from_file(self, filepath: str):
+        self.model.train_from_file(filepath)
+        self.trained = True
+
+    def generate_passwords(self, count: int = 10, min_length: int = 8, max_length: int = 16) -> List[str]:
+        if not self.trained:
+            raise ValueError("Model must be trained before generating passwords")
+
+        passwords: Set[str] = set()
+        attempts = 0
+        max_attempts = count * 20
+
+        while len(passwords) < count and attempts < max_attempts:
+            pwd = self.model.generate_password(max_length)
+            if pwd and min_length <= len(pwd) <= max_length:
+                passwords.add(pwd)
+            attempts += 1
+
+        return list(passwords)
+
+
 class MarkovAttack:
-    """Markov chain-based password attack"""
+    """Markov chain-based password attack using multiprocessing"""
 
     def __init__(
         self,
         training_file: str,
         hash_type: str,
-        max_threads: int = 4,
+        max_processes: int = 4,
         max_passwords: int = 100000,
     ):
-        download_rockyou_wordlist()
-        if not os.path.exists(training_file):
-            raise FileNotFoundError(
-                f"Training file not found at '{training_file}'. "
-                "Please ensure the file exists. "
-                "You may need to download a wordlist like 'rockyou.txt' and place it in the 'data' directory."
-            )
+        if training_file == "data/rockyou.txt" and not os.path.exists(training_file):
+            download_rockyou_wordlist()
+        
         self.training_file = training_file
         self.hash_type = hash_type
-        self.max_threads = max_threads
+        self.max_processes = max_processes
         self.max_passwords = max_passwords
         self.model = MarkovModel(order=3)
         self.trained = False
 
     def train_model(self):
-        """Train the Markov model on the provided file using a stream"""
+        """Train the Markov model on the provided file"""
         try:
-            def password_stream():
-                count = 0
-                with open(self.training_file, "r", encoding="utf-8", errors="ignore") as f:
-                    for line in f:
-                        yield line
-                        count += 1
-                        if count >= 100000:  # Still sample for training performance
-                            break
-
-            self.model.train(password_stream())
+            self.model.train_from_file(self.training_file)
             self.trained = True
-
         except Exception as e:
             print(f"Error training Markov model: {e}")
             raise
@@ -150,13 +186,13 @@ class MarkovAttack:
 
         print(f"Starting Markov attack on {self.hash_type} hash")
         print(f"Generating up to {self.max_passwords} password candidates...")
-        print(f"Using {self.max_threads} processes")
+        print(f"Using {self.max_processes} processes")
 
         result_queue = multiprocessing.Queue()
-        passwords_per_process = self.max_passwords // self.max_threads
+        passwords_per_process = self.max_passwords // self.max_processes
         
         processes = []
-        for _ in range(self.max_threads):
+        for _ in range(self.max_processes):
             p = multiprocessing.Process(
                 target=self._worker,
                 args=(target_hash, passwords_per_process, result_queue)
@@ -165,7 +201,6 @@ class MarkovAttack:
             p.start()
             processes.append(p)
 
-        # Wait for threads to complete
         found_password = None
         finished_workers = 0
         
