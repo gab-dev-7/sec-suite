@@ -1,5 +1,5 @@
 import os
-import pickle
+import json
 from typing import Optional
 from utils.crypto import hash_password
 
@@ -19,10 +19,10 @@ class RainbowAttack:
     def load_rainbow_table(self, file_path: str):
         """Load rainbow table from file"""
         try:
-            # Try to load as pickle first
-            if file_path.endswith(".pkl"):
-                with open(file_path, "rb") as f:
-                    self.rainbow_table = pickle.load(f)
+            # Try to load as json first
+            if file_path.endswith(".json"):
+                with open(file_path, "r", encoding="utf-8") as f:
+                    self.rainbow_table = json.load(f)
             else:
                 # Load as text file (hash:password format)
                 with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
@@ -53,9 +53,9 @@ class RainbowAttack:
                     if line_num % 10000 == 0:
                         print(f"Processed {line_num} passwords...")
 
-            # Save as pickle for faster loading
-            with open(output_path, "wb") as f:
-                pickle.dump(rainbow_table, f)
+            # Save as json for safer loading
+            with open(output_path, "w", encoding="utf-8") as f:
+                json.dump(rainbow_table, f)
 
             print(f"Rainbow table generated with {len(rainbow_table)} entries")
             self.rainbow_table = rainbow_table
