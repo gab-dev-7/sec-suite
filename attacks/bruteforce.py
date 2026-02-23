@@ -22,13 +22,13 @@ class BruteForceAttack:
         charset: str = "lud",
         min_length: int = 1,
         max_length: int = 8,
-        max_threads: int = 4,
+        max_processes: int = 4,
     ):
         self.hash_type = hash_type
         self.charset = self._build_charset(charset)
         self.min_length = min_length
         self.max_length = max_length
-        self.max_threads = max_threads
+        self.max_processes = max_processes
 
     def _build_charset(self, charset_spec: str) -> str:
         """Build character set from specification string"""
@@ -70,7 +70,7 @@ class BruteForceAttack:
         print(f"Character set: {self.charset}")
         print(f"Password length: {self.min_length}-{self.max_length}")
         print(f"Total combinations: {self.calculate_total_combinations()}")
-        print(f"Using {self.max_threads} processes")
+        print(f"Using {self.max_processes} processes")
 
         for length in range(self.min_length, self.max_length + 1):
             print(f"Trying length {length}...")
@@ -80,7 +80,7 @@ class BruteForceAttack:
             
             # Divide the charset among workers
             charset_list = list(self.charset)
-            chunk_size = max(1, len(charset_list) // self.max_threads)
+            chunk_size = max(1, len(charset_list) // self.max_processes)
             
             for i in range(0, len(charset_list), chunk_size):
                 chars_chunk = charset_list[i : i + chunk_size]

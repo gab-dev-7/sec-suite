@@ -36,13 +36,13 @@ def password_cracker_mode(args):
         attack = DictionaryAttack(
             wordlist_path=args.wordlist,
             hash_type=args.hash_type,
-            max_threads=args.threads,
+            max_processes=args.threads,
         )
     elif args.attack_mode == "markov":
         attack = MarkovAttack(
             training_file=args.wordlist,
             hash_type=args.hash_type,
-            max_threads=args.threads,
+            max_processes=args.threads,
             max_passwords=args.max_passwords,
         )
     elif args.attack_mode == "bruteforce":
@@ -51,7 +51,7 @@ def password_cracker_mode(args):
             charset=args.charset,
             min_length=args.min_length,
             max_length=args.max_length,
-            max_threads=args.threads,
+            max_processes=args.threads,
         )
     elif args.attack_mode == "rainbow":
         attack = RainbowAttack(args.rainbow_table)
