@@ -1,6 +1,7 @@
 import hashlib
 import bcrypt
 import base64
+import binascii
 import urllib.parse
 import html
 import re
@@ -52,6 +53,8 @@ def verify_password(password: str, hash_value: str, algorithm: str) -> bool:
             return bcrypt.checkpw(password.encode("utf-8"), hash_value.encode("utf-8"))
         elif algorithm == "scrypt":
             try:
+                if "$" not in hash_value:
+                    return False
                 salt_hex, hashed_password_hex = hash_value.split("$")
                 salt = bytes.fromhex(salt_hex)
                 password_bytes = password.encode("utf-8")
@@ -64,14 +67,18 @@ def verify_password(password: str, hash_value: str, algorithm: str) -> bool:
                     dklen=64,
                 )
                 return new_hash.hex() == hashed_password_hex
-            except:
+            except (ValueError, TypeError, binascii.Error):
                 return False
         elif algorithm == "argon2":
             ph = argon2.PasswordHasher()
-            return ph.verify(hash_value, password.encode("utf-8"))
+            try:
+                return ph.verify(hash_value, password.encode("utf-8"))
+            except (argon2.exceptions.VerifyMismatchError, argon2.exceptions.VerificationError):
+                return False
         else:
             return False
-    except:
+    except Exception:
+        # Final safety catch for unexpected hashing library behavior
         return False
 
 
@@ -109,10 +116,7 @@ def base64_encode(data: str) -> str:
 
 def base64_decode(data: str) -> str:
     """Base64 decode data"""
-    try:
-        return base64.b64decode(data.encode("utf-8")).decode("utf-8")
-    except:
-        return "Invalid Base64 data"
+    return base64.b64decode(data.encode("utf-8")).decode("utf-8")
 
 
 def url_encode(data: str) -> str:
@@ -142,7 +146,4 @@ def hex_encode(data: str) -> str:
 
 def hex_decode(data: str) -> str:
     """Hex decode data"""
-    try:
-        return bytes.fromhex(data).decode("utf-8")
-    except:
-        return "Invalid hex data"
+    return bytes.fromhex(data).decode("utf-8")
