@@ -9,7 +9,7 @@
 
 **SEC-SUITE** is a comprehensive security toolkit designed for professionals, penetration testers, and educators. It unifies powerful password auditing capabilities with essential network reconnaissance tools in a single, modular interface.
 
-Whether you prefer a **CLI** for ease of use or **Raw Terminal Commands** for automation, SEC-SUITE adapts to your workflow.
+Whether you prefer an **Interactive CLI** for ease of use or **Raw Terminal Commands** for automation, SEC-SUITE adapts to your workflow.
 
 ---
 
@@ -17,11 +17,12 @@ Whether you prefer a **CLI** for ease of use or **Raw Terminal Commands** for au
 
 | Category | Capabilities |
 | :--- | :--- |
-| **🔐 Password Attacks** | **Markov Chain** (Probabilistic), **Brute Force** (Configurable), **Dictionary** (Multi-threaded), **Rainbow Table** |
-| **⚡ Performance** | **Multi-threading** across all modules, Smart Hash Auto-detection |
-| **🛡️ Modern Hashes** | Support for **Argon2**, **Bcrypt**, **Scrypt**, SHA-256/512, MD5, and more |
-| **📡 Network Ops** | Multi-threaded **Port Scanner**, Service Discovery, CIDR support |
-| **🛠️ Utilities** | **Encoding/Decoding** (Base64, Hex, URL, HTML), Password Strength Analyzer |
+| **🔐 Password Attacks** | **Markov Chain** (Probabilistic), **Brute Force** (Configurable), **Dictionary** (Multi-process), **Rainbow Table** |
+| **⚡ Performance** | **Multi-processing** across all attack modules for true parallelism, optimized password batching. |
+| **🛡️ Modern Hashes** | Support for **Argon2**, **Bcrypt**, **Scrypt**, SHA-256/512, MD5, and more with auto-detection. |
+| **📡 Network Ops** | Stealthy **SYN Port Scanner** (requires root/sudo), Service Discovery, CIDR support. |
+| **🤖 Gen-AI** | **Advanced Password Generator** using trained Markov models to create realistic password lists. |
+| **🛠️ Utilities** | **Encoding/Decoding** (Base64, Hex, URL, HTML), Password Strength Analyzer. |
 
 ---
 
@@ -35,24 +36,19 @@ Whether you prefer a **CLI** for ease of use or **Raw Terminal Commands** for au
 
 1. **Clone the repository**
 ```bash
-git clone [https://github.com/gab-dev-7/sec-suite.git](https://github.com/gab-dev-7/sec-suite.git)
+git clone https://github.com/gab-dev-7/sec-suite.git
 cd sec-suite
-
 ```
 
 2. **Install dependencies**
 ```bash
 poetry install
-
 ```
-
 
 3. **Activate the environment** (Important!)
 ```bash
 poetry shell
-
 ```
-
 
 *Note: This command enters the virtual environment. Your terminal prompt should change. You can now run the commands below without `poetry run`.*
 
@@ -60,16 +56,17 @@ poetry shell
 
 ## 🎮 Interactive Mode (Recommended)
 
-If you are new to the tool or prefer a visual menu, start here:
+For a user-friendly, menu-driven experience, start the tool with:
 
 ```bash
 python run.py
-
 ```
 
-* **Breadcrumb Navigation:** Never get lost in sub-menus.
-* **Progress Indicators:** Real-time visual feedback for long operations.
-* **Input Validation:** Handles errors gracefully.
+The interactive mode provides access to all of SEC-SUITE's core features, including:
+*   **Password Cracking**: Guided setup for Dictionary, Brute-force, and Markov attacks.
+*   **Network Scanner**: A fully interactive interface for the SYN scanner.
+*   **Password Generation**: Create customized password lists using trained Markov models.
+*   **Hash Analysis & Encoding**: Easily access all the utility functions.
 
 ---
 
@@ -82,11 +79,10 @@ python run.py
 <details>
 <summary><strong>📖 Dictionary Attack</strong></summary>
 
-Traditional wordlist-based recovery. Automatically downloads `rockyou.txt` if missing.
+High-performance, multi-process wordlist recovery. Automatically downloads `rockyou.txt` if missing.
 
 ```bash
 python main.py crack -t <HASH> -a sha256 -m dictionary
-
 ```
 
 </details>
@@ -98,7 +94,6 @@ Probabilistic generation using machine learning models trained on real password 
 
 ```bash
 python main.py crack -t <HASH> -a md5 -m markov --max-passwords 50000
-
 ```
 
 </details>
@@ -106,12 +101,11 @@ python main.py crack -t <HASH> -a md5 -m markov --max-passwords 50000
 <details>
 <summary><strong>🔢 Brute Force</strong></summary>
 
-Exhaustive search with custom character sets (`l`=lower, `u`=upper, `d`=digits, `s`=special).
+Exhaustive, multi-process search with custom character sets (`l`=lower, `u`=upper, `d`=digits, `s`=special).
 
 ```bash
 # Brute force a SHA1 hash, length 4-6, lowercase + digits
 python main.py crack -t <HASH> -a sha1 -m bruteforce --charset "ld" --min-length 4 --max-length 6
-
 ```
 
 </details>
@@ -119,24 +113,26 @@ python main.py crack -t <HASH> -a sha1 -m bruteforce --charset "ld" --min-length
 <details>
 <summary><strong>🌈 Rainbow Table</strong></summary>
 
-Instant lookup using precomputed tables.
+Instant lookup using precomputed tables (now uses a secure JSON format).
 
 ```bash
-python main.py crack -t <HASH> -m rainbow --rainbow-table my_table.rt
-
+python main.py crack -t <HASH> -m rainbow --rainbow-table my_table.json
 ```
 
 </details>
 
 ### 2. Network Reconnaissance
 
+The network scanner performs a **SYN Scan** (also known as a "half-open" scan), which is stealthier than a full TCP connect. This requires raw socket permissions.
+
+⚠️ **Important:** You must run network scans with root privileges.
+
 ```bash
-# Scan a single IP
-python main.py scan -t 192.168.1.5 -p 1-1000 --threads 50
+# Scan a single IP with sudo
+sudo python main.py scan -t 192.168.1.5 -p 1-1000 --threads 50
 
 # Scan a subnet (CIDR)
-python main.py scan -t 192.168.1.0/24 -p 22,80,443
-
+sudo python main.py scan -t 192.168.1.0/24 -p 22,80,443
 ```
 
 ### 3. Utilities & Encoders
@@ -150,7 +146,6 @@ python main.py encode -d "hello world" -e base64 -o encode
 
 # URL Decode
 python main.py encode -d "hello%20world" -e url -o decode
-
 ```
 
 ---
@@ -163,10 +158,9 @@ python main.py encode -d "hello%20world" -e url -o decode
 sec-suite/
 ├── attacks/          # Modular attack implementations
 ├── tools/            # Network scanner and Encoders
-├── utils/            # Core logic (Hash detection, Logging)
+├── utils/            # Core logic (Hash detection, Crypto)
 ├── data/             # Wordlists (auto-downloads rockyou.txt)
 └── main.py           # CLI Entry point
-
 ```
 
 ### Custom Wordlists
@@ -177,18 +171,6 @@ SEC-SUITE uses `data/rockyou.txt` by default. To use your own:
 2. Run with the `-w` flag:
 ```bash
 python main.py crack ... -w data/my_custom_list.txt
-
-```
-
-
-
-### Logging
-
-All operations are logged to `sec-suite.log`. Use this for debugging or audit trails.
-
-```bash
-tail -f sec-suite.log
-
 ```
 
 ---
@@ -216,4 +198,4 @@ We welcome contributions!
 
 ---
 
-*SEC-SUITE v2.0 - Advanced Security Testing Toolkit*
+*SEC-SUITE v2.1 - Advanced Security Testing Toolkit*
