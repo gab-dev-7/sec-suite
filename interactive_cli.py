@@ -16,9 +16,10 @@ from utils.banner import show_banner
 from utils.crypto import hash_password, identify_hash_type
 from utils.password_analyzer import analyze_password_strength
 from attacks.dictionary import DictionaryAttack
-from attacks.markov import MarkovAttack
+from attacks.markov import MarkovAttack, AdvancedPasswordGenerator
 from attacks.bruteforce import BruteForceAttack
 from attacks.rainbow import RainbowAttack
+from tools.network_scanner import NetworkScanner
 
 
 class InteractiveCLI:
@@ -256,7 +257,7 @@ class InteractiveCLI:
         print("-" * 50)
 
         try:
-            attack = DictionaryAttack(wordlist, hash_type, int(threads))
+            attack = DictionaryAttack(wordlist, hash_type, max_processes=int(threads))
             result = attack.crack(target_hash)
 
             if result:
@@ -335,7 +336,7 @@ class InteractiveCLI:
 
         print(f"\nStarting brute force attack...")
         print(
-            f"This will test up to {BruteForceAttack(hash_type, charset, int(min_len), int(max_len)).calculate_total_combinations()} combinations"
+            f"This will test up to {BruteForceAttack(hash_type, charset, int(min_len), int(max_len), max_processes=1).calculate_total_combinations()} combinations"
         )
         print("This may take a very long time!")
 
@@ -347,7 +348,7 @@ class InteractiveCLI:
 
         try:
             attack = BruteForceAttack(
-                hash_type, charset, int(min_len), int(max_len), int(threads)
+                hash_type, charset, int(min_len), int(max_len), max_processes=int(threads)
             )
             result = attack.crack(target_hash)
 
@@ -474,26 +475,65 @@ class InteractiveCLI:
         self.clear_screen()
         self.print_header("Network Port Scanner")
 
-        print("Note: This feature requires command-line usage for full functionality.")
-        print("\nTo use the network scanner, run:")
-        print("  python main.py scan -t 192.168.1.1/24 -p 1-1000")
-        print("\nOr for a single host:")
-        print("  python main.py scan -t 192.168.1.1 -p 22,80,443,3389")
+        target = input("Enter target IP or range (e.g., 192.168.1.1 or 192.168.1.0/24): ").strip()
+        if not target:
+            print("Target cannot be empty!")
+            self.wait_for_enter()
+            return
+
+        ports = input("Enter port range [1-1000]: ").strip() or "1-1000"
+        threads = input("Enter number of threads [50]: ").strip() or "50"
+        timeout = input("Enter timeout in seconds [1.0]: ").strip() or "1.0"
+
+        print(f"\nStarting network scan on {target}...")
+        print(f"Ports: {ports}")
+        print(f"Threads: {threads}")
+        print(f"Timeout: {timeout}s")
+        print("-" * 50)
+
+        try:
+            scanner = NetworkScanner(target, ports, int(threads), float(timeout))
+            scanner.scan()
+        except Exception as e:
+            print(f"\n💥 Error: {e}")
 
         self.wait_for_enter()
-
-
 
     def generate_passwords(self):
         """Interactive password generation"""
         self.clear_screen()
         self.print_header("Password List Generation")
 
-        print("Note: This feature requires the password generator module.")
-        print("\nTo generate passwords using Markov chains, run:")
-        print(
-            "  python -c \"from password_generator import AdvancedPasswordGenerator; gen = AdvancedPasswordGenerator('data/rockyou.txt'); print(gen.generate_passwords(10))\""
+        training_file = (
+            input("Enter training file [data/rockyou.txt]: ").strip()
+            or "data/rockyou.txt"
         )
+        
+        if not os.path.exists(training_file):
+            print(f"Error: Training file {training_file} not found.")
+            self.wait_for_enter()
+            return
+
+        count = input("Enter number of passwords to generate [10]: ").strip() or "10"
+        min_len = input("Enter minimum length [8]: ").strip() or "8"
+        max_len = input("Enter maximum length [12]: ").strip() or "12"
+
+        print(f"\nTraining model and generating passwords...")
+        print("This may take a moment depending on the training file size.")
+
+        try:
+            generator = AdvancedPasswordGenerator(training_file)
+            passwords = generator.generate_passwords(int(count), int(min_len), int(max_len))
+
+            print(f"\nGenerated {len(passwords)} passwords:")
+            print("-" * 50)
+            for i, pwd in enumerate(passwords, 1):
+                # Using strength analyzer for each generated password
+                score = analyze_password_strength(pwd)
+                print(f"{i:2d}. {pwd} (Score: {score}/100)")
+                print("-" * 20)
+        except Exception as e:
+            print(f"\n💥 Error: {e}")
 
         self.wait_for_enter()
 

@@ -4,10 +4,13 @@ import ipaddress
 import time
 import queue
 from typing import List
+from scapy.all import IP, TCP, sr1, conf
 
+# Disable scapy's default verbose output
+conf.verb = 0
 
 class NetworkScanner:
-    """Multi-threaded network port scanner with graceful shutdown"""
+    """Multi-threaded network port scanner using Scapy for SYN scans"""
 
     def __init__(
         self,
@@ -46,7 +49,7 @@ class NetworkScanner:
             return [self.target]
 
     def _scan_worker(self, port_queue: queue.Queue, host: str):
-        """Worker thread to scan ports from a queue"""
+        """Worker thread to perform SYN scan using Scapy"""
         while not self.stop_event.is_set():
             try:
                 port = port_queue.get(timeout=0.1)
@@ -54,18 +57,36 @@ class NetworkScanner:
                 continue
 
             try:
-                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-                    sock.settimeout(self.timeout)
-                    if sock.connect_ex((host, port)) == 0:
-                        with self.lock:
-                            self.open_ports.append(port)
-                            print(f"Port {port}: OPEN")
-            except socket.gaierror:
+                # Craft SYN packet
+                syn_packet = IP(dst=host) / TCP(dport=port, flags="S")
+                
+                # Send packet and wait for response
+                response = sr1(syn_packet, timeout=self.timeout, verbose=0)
+
+                if response:
+                    if response.haslayer(TCP):
+                        # SA (SYN-ACK) means port is open
+                        if response.getlayer(TCP).flags == 0x12:
+                            # Send RST to close the connection gracefully (stealthy)
+                            rst_packet = IP(dst=host) / TCP(dport=port, flags="R")
+                            from scapy.all import send
+                            send(rst_packet, verbose=0)
+                            
+                            with self.lock:
+                                self.open_ports.append(port)
+                                print(f"Port {port}: OPEN")
+                        # RA (RST-ACK) means port is closed
+                        elif response.getlayer(TCP).flags == 0x14:
+                            pass 
+            except Exception as e:
+                # Often occurs if user doesn't have root privileges for raw sockets
                 with self.lock:
-                    print(f"Hostname could not be resolved for port {port}")
-            except socket.error as e:
-                with self.lock:
-                    print(f"Couldn't connect to port {port}: {e}")
+                    if "Permission denied" in str(e):
+                        print(f"Error: Scapy SYN scan requires root/sudo privileges.")
+                        self.stop_event.set()
+                        break
+                    else:
+                        print(f"Error scanning port {port} on {host}: {e}")
             finally:
                 with self.lock:
                     self.scanned_ports += 1
@@ -76,10 +97,11 @@ class NetworkScanner:
         while not self.stop_event.is_set() and self.scanned_ports < self.total_ports:
             time.sleep(2)
             with self.lock:
-                progress = (self.scanned_ports / self.total_ports) * 100
-                print(
-                    f"Progress: {self.scanned_ports}/{self.total_ports} ports scanned ({progress:.2f}%)"
-                )
+                if self.total_ports > 0:
+                    progress = (self.scanned_ports / self.total_ports) * 100
+                    print(
+                        f"Progress: {self.scanned_ports}/{self.total_ports} ports scanned ({progress:.2f}%)"
+                    )
 
     def scan(self):
         """Perform the network scan"""
@@ -87,11 +109,18 @@ class NetworkScanner:
         self.total_ports = len(hosts) * len(self.ports_to_scan)
 
         print(
-            f"Starting scan on {len(hosts)} host(s) for {len(self.ports_to_scan)} ports each."
+            f"Starting SYN scan on {len(hosts)} host(s) for {len(self.ports_to_scan)} ports each."
         )
         print(f"Total ports to scan: {self.total_ports}")
         print(f"Using {self.max_threads} threads. Timeout: {self.timeout}s.")
         print("-" * 50)
+        
+        # Check for root privileges (required for raw sockets in Scapy)
+        import os
+        if os.name != 'nt' and os.geteuid() != 0:
+            print("[!] WARNING: SYN scans usually require root privileges.")
+            print("[!] If the scan fails, try running with 'sudo'.\n")
+
         start_time = time.time()
 
         try:
